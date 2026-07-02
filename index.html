@@ -496,7 +496,6 @@
             will-change: transform, color;
             margin-bottom: 16px;
         }
-        /* Поднимаем букву вверх в режиме отправки, чтобы выносные элементы не перекрывали статус */
         .main-card.send-mode .letter-display {
             position: relative;
             top: -6px;
@@ -550,34 +549,6 @@
             }
         }
 
-        @keyframes statusSuccess {
-            0% {
-                color: var(--text);
-            }
-            10% {
-                color: var(--success);
-            }
-            90% {
-                color: var(--success);
-            }
-            100% {
-                color: var(--text);
-            }
-        }
-        @keyframes statusFail {
-            0% {
-                color: var(--text);
-            }
-            10% {
-                color: var(--error);
-            }
-            90% {
-                color: var(--error);
-            }
-            100% {
-                color: var(--text);
-            }
-        }
         .status-text {
             margin-top: 16px;
             font-size: 0.85rem;
@@ -585,19 +556,28 @@
             min-height: 24px;
             letter-spacing: 0.05em;
             color: var(--text);
-            transition: color 0s;
+            transition: none;
         }
         .status-text.success {
-            animation: statusSuccess var(--result-duration) ease forwards;
+            color: var(--success);
         }
         .status-text.fail {
-            animation: statusFail var(--result-duration) ease forwards;
+            color: var(--error);
         }
         .status-text.warning {
             color: var(--gold);
         }
         .status-text.info {
             color: var(--text-secondary);
+        }
+
+        /* Анимация появления для предупреждения "Введите позицию" */
+        @keyframes fadeInWarning {
+            0% { opacity: 0; transform: translateY(-6px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .status-text.warning.animate-warning {
+            animation: fadeInWarning 0.2s ease-out;
         }
 
         .patterns-section {
@@ -1712,7 +1692,7 @@
             let resultTimeoutId = null;
             let releaseTimeoutId = null;
             let revealTimeoutId = null;
-            let statusTimeoutId = null; // таймер для автоочистки статуса
+            let statusTimeoutId = null;
             let hintVisible = true;
             const pressedKeys = new Set();
             let activeHand = 'right';
@@ -1996,6 +1976,18 @@
             function handleMouseConfirm() {
                 if (!isMouseInput || mode !== 'send' || state !== 'idle') return;
                 if (!currentLetter || !currentCode) return;
+
+                const sumBits = mouseInputBits.reduce((a, b) => a + b, 0);
+                if (sumBits === 0) {
+                    setStatus('Введите позицию', 'warning');
+                    // Запуск анимации появления
+                    statusText.classList.remove('animate-warning');
+                    void statusText.offsetWidth; // рефлоу для перезапуска анимации
+                    statusText.classList.add('animate-warning');
+                    setTimeout(() => statusText.classList.remove('animate-warning'), 200);
+                    return;
+                }
+
                 const inputCode = mouseInputBits.join('');
                 const isCorrect = (inputCode === currentCode);
                 clearAllTimeouts();
@@ -2112,7 +2104,6 @@
                 const isSend = mode === 'send';
                 const isReceive = mode === 'receive';
 
-                // Управление классом send-mode на mainCard для поднятия буквы
                 mainCard.classList.toggle('send-mode', isSend);
 
                 radioSend.textContent = isSend ? '●' : '○';
@@ -2243,7 +2234,6 @@
                 const wasHintVisible = hintVisible;
                 hintVisible = !hintVisible;
 
-                // Сброс счёта только при переходе из режима с подсказками в режим без подсказок
                 if (!hintVisible) {
                     streak = 0;
                     streakValue.textContent = '0';
@@ -2252,7 +2242,6 @@
                     recordBadge.classList.remove('record-correct');
                     recordValue.classList.remove('glow-correct');
                     setStatus('Подсказки изменены — счёт сброшен', 'warning');
-                    // Автоматически скрыть предупреждение через 5 секунд
                     if (statusTimeoutId) clearTimeout(statusTimeoutId);
                     statusTimeoutId = setTimeout(() => {
                         if (statusText.textContent === 'Подсказки изменены — счёт сброшен') {
@@ -2261,7 +2250,6 @@
                         statusTimeoutId = null;
                     }, 5000);
                 } else {
-                    // При включении подсказок убираем любое предупреждение сразу
                     if (statusTimeoutId) {
                         clearTimeout(statusTimeoutId);
                         statusTimeoutId = null;
@@ -2364,7 +2352,7 @@
                     releaseTimeoutId = setTimeout(() => {
                         if (pressedKeys.size > 0 && state === 'idle') {
                             state = 'waitRelease';
-                            setStatus('Отпустите все клавиши...', 'warning');
+                            setStatus('Отпустите все клавиши', 'warning');
                         }
                     }, RELEASE_DELAY);
                 } else state = 'idle';
@@ -2485,7 +2473,7 @@
                             releaseTimeoutId = setTimeout(() => {
                                 if (pressedKeys.size > 0 && state === 'idle') {
                                     state = 'waitRelease';
-                                    setStatus('Отпустите все клавиши...', 'warning');
+                                    setStatus('Отпустите все клавиши', 'warning');
                                 }
                             }, RELEASE_DELAY);
                         } else {
@@ -2771,10 +2759,9 @@
                 activateMouseInput();
             });
 
-            // Обработчик кликов по точкам ввода (мышь)
+            // Клик по точкам ввода – переключение бита + снятие предупреждения
             inputDotsContainer.addEventListener('click', function(e) {
                 if (!isMouseInput) return;
-                // Если уже было обработано касанием, пропускаем
                 if (touchHandled) {
                     touchHandled = false;
                     return;
@@ -2786,10 +2773,14 @@
                 const finger = parseInt(dot.getAttribute('data-finger'), 10);
                 mouseInputBits[finger] = mouseInputBits[finger] ? 0 : 1;
                 updateMouseDots();
+                // Снять предупреждение, если есть
+                if (statusText.textContent === 'Введите позицию') {
+                    setStatus('', '');
+                }
                 playClickSafe();
             });
 
-            // Обработчик касаний для мобильных устройств (мгновенная реакция)
+            // Касание на мобильных – та же логика
             if (isTouchDevice) {
                 inputDotsContainer.addEventListener('touchstart', function(e) {
                     if (!isMouseInput) return;
@@ -2800,10 +2791,11 @@
                     const finger = parseInt(dot.getAttribute('data-finger'), 10);
                     mouseInputBits[finger] = mouseInputBits[finger] ? 0 : 1;
                     updateMouseDots();
+                    if (statusText.textContent === 'Введите позицию') {
+                        setStatus('', '');
+                    }
                     playClickSafe();
-                    // Устанавливаем флаг, чтобы предотвратить повторную обработку в click
                     touchHandled = true;
-                    // Сбрасываем флаг асинхронно, чтобы click успел его увидеть
                     setTimeout(() => { touchHandled = false; }, 0);
                 }, { passive: false });
             }
@@ -2828,6 +2820,10 @@
                     updateTargetDots(currentCode);
                     updateInputDots();
                     clearScoreGlow();
+                }
+                // Снять предупреждение, если есть
+                if (statusText.textContent === 'Введите позицию') {
+                    setStatus('', '');
                 }
                 playClickSafe();
             });
