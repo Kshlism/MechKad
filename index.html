@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Тренажёр MKC</title>
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖐️</text></svg>" />
@@ -33,6 +33,8 @@
             --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             --font: 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
             --result-duration: 0.6s;
+            --dot-size: 40px;
+            --dot-gap: 10px;
         }
         * {
             margin: 0;
@@ -85,6 +87,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            position: relative; /* Добавлено для правильного позиционирования меню в чате */
         }
         .title {
             font-size: 1.25rem;
@@ -98,6 +101,7 @@
             align-items: center;
             gap: 8px;
             position: relative;
+            flex-wrap: wrap;
         }
         .badge {
             display: flex;
@@ -116,6 +120,102 @@
             min-width: 30px;
             text-align: center;
             transition: color 0s;
+        }
+
+        /* chat controls in header - скрываются в режиме чата (управление через меню) */
+        .chat-controls {
+            display: none;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .chat-controls.show {
+            display: none; /* больше не показываем, всё в меню */
+        }
+        .chat-controls .chat-icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1px solid #333355;
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all var(--transition);
+            flex-shrink: 0;
+        }
+        .chat-controls .chat-icon-btn:hover {
+            background: #2a2a48;
+            border-color: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 12px rgba(91, 141, 239, 0.3);
+        }
+        .chat-controls .chat-peer-input {
+            background: var(--surface);
+            border: 1px solid #333355;
+            border-radius: 20px;
+            padding: 6px 12px;
+            color: var(--text);
+            width: 120px;
+            text-align: center;
+            font-family: var(--font);
+            font-size: 0.8rem;
+        }
+        .chat-controls .peer-id-label {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        .chat-controls .peer-id-value {
+            font-weight: bold;
+            color: var(--accent-glow);
+            font-size: 0.85rem;
+            user-select: all;
+        }
+
+        /* Combined control groups */
+        .chat-control-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--surface);
+            border: 1px solid #333355;
+            border-radius: 30px;
+            padding: 4px 12px 4px 16px;
+        }
+        .chat-control-group .chat-icon-btn {
+            width: 32px;
+            height: 32px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            padding: 0;
+        }
+        .chat-control-group .chat-icon-btn:hover {
+            color: #fff;
+            background: transparent;
+            box-shadow: none;
+        }
+        .chat-control-group .peer-id-value {
+            font-size: 0.8rem;
+        }
+        .chat-control-group .chat-peer-input {
+            width: 100px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            background: transparent;
+            border: 1px solid #333355;
+            border-radius: 16px;
+            color: var(--text);
+            text-align: center;
+        }
+        .chat-control-group .chat-peer-input:focus {
+            outline: none;
+            border-color: var(--accent);
         }
 
         @keyframes glowCorrect {
@@ -317,7 +417,27 @@
             position: relative;
             flex-shrink: 0;
         }
-        .menu-btn:hover {
+        .menu-btn-alt {
+            /* идентична menu-btn, но для title-area */
+            background: var(--surface);
+            border: 1px solid #333355;
+            border-radius: 50%;
+            width: 52px;
+            height: 52px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            transition: all var(--transition);
+            padding: 0;
+            line-height: 1;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+        .menu-btn:hover,
+        .menu-btn-alt:hover {
             background: #2a2a48;
             border-color: var(--accent);
             color: #fff;
@@ -325,8 +445,8 @@
         }
         .menu-dropdown {
             position: absolute;
-            top: 48px;
-            right: 0;
+            top: calc(100% + 8px) !important; /* Опущено под кнопку */
+            right: 0 !important; /* Прижато вплотную к правому краю родителя */
             background: var(--surface);
             border: 1px solid #333355;
             border-radius: var(--radius-sm);
@@ -337,6 +457,8 @@
             z-index: 10;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
             min-width: 210px;
+            width: max-content;
+            max-width: 90vw;
             opacity: 0;
             transform: translateY(-10px) scale(0.95);
             visibility: hidden;
@@ -427,6 +549,57 @@
             flex: 1;
         }
 
+        /* Connection section inside menu */
+        #menuConnectionSection .menu-item {
+            pointer-events: auto;
+            background: transparent;
+            border: none;
+            padding: 4px 10px;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+        }
+        #menuConnectionSection .menu-item button {
+            pointer-events: auto;
+        }
+        #menuConnectionSection .chat-peer-input {
+            width: 80px;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            background: #1e1e36;
+            border: 1px solid #333355;
+            border-radius: 14px;
+            color: var(--text);
+            text-align: center;
+        }
+        #menuConnectionSection .chat-icon-btn {
+            width: 30px;
+            height: 30px;
+            font-size: 1rem;
+            background: #2a2a44;
+            border: 1px solid #333355;
+            border-radius: 50%;
+            color: var(--text-secondary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        #menuConnectionSection .chat-icon-btn:hover {
+            background: #3a4a70;
+            border-color: var(--accent);
+            color: #fff;
+        }
+        #menuConnectionSection .peer-id-value {
+            font-weight: bold;
+            color: var(--accent-glow);
+            font-size: 0.8rem;
+            user-select: all;
+        }
+
         @keyframes mainCardCorrect {
             0% {
                 border-color: #2a2a48;
@@ -494,25 +667,25 @@
             justify-content: center;
             will-change: transform, color;
             margin-bottom: 16px;
-        }
-        .main-card.send-mode .letter-display {
             position: relative;
-            top: -6px;
         }
-        .letter-display.correct {
+        .letter-inner {
+            display: inline-block;
+        }
+        .letter-inner.correct {
             color: var(--success);
             animation: letterPop 0.4s ease-out;
         }
-        .letter-display.error {
+        .letter-inner.error {
             color: var(--error);
             animation: letterShake 0.4s ease-out;
         }
-        .letter-display.timer-active {
+        .letter-inner.timer-active {
             color: #f0c060;
             transform: scale(1.12);
             transition: color 0.8s linear, transform 0.8s ease-out;
         }
-        .letter-display.reveal {
+        .letter-inner.reveal {
             color: #ffffff;
         }
         @keyframes letterPop {
@@ -548,6 +721,35 @@
             }
         }
 
+        /* Стили для обычных флагов (в режиме отправки/полном) */
+        .letter-display .lang-flag {
+            position: absolute;
+            top: 50%;
+            right: -5px;
+            transform: translateY(-50%);
+            font-size: 1.6rem;
+            line-height: 1;
+        }
+
+        /* Стили для флага-статуса под буквой (в полном режиме) */
+        .lang-flag-status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            line-height: 1;
+            pointer-events: none;
+            display: none;
+            z-index: 2;
+            transition: none !important;
+        }
+
+        .main-card.send-mode .letter-display {
+            position: relative;
+            top: -6px;
+        }
+
         .status-text {
             margin-top: 16px;
             font-size: 0.85rem;
@@ -556,6 +758,7 @@
             letter-spacing: 0.05em;
             color: var(--text);
             transition: none;
+            position: relative;
         }
         .status-text.success {
             color: var(--success);
@@ -603,14 +806,21 @@
             text-align: right;
             flex-shrink: 0;
         }
+        .pattern-row.full-mode .pattern-label {
+            display: none;
+        }
+        .pattern-row.full-mode .hint-placeholder {
+            display: none;
+        }
         .finger-dots {
             display: flex;
-            gap: 10px;
+            gap: var(--dot-gap);
             justify-content: center;
+            align-items: center;
         }
         .finger-dot {
-            width: 40px;
-            height: 40px;
+            width: var(--dot-size);
+            height: var(--dot-size);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -632,12 +842,25 @@
             color: #bcc8e8;
             box-shadow: 0 0 12px rgba(91, 141, 239, 0.2);
         }
+        .target-dot.direction-active {
+            background: #3a4a70;
+            border-color: #5b8def88;
+            color: #bcc8e8;
+            box-shadow: 0 0 12px rgba(91, 141, 239, 0.2);
+        }
         .input-dot {
             background: var(--finger-up);
             border: 2px solid var(--finger-up-border);
             color: #8888aa;
         }
         .input-dot.pressed {
+            background: var(--finger-down);
+            border-color: var(--finger-down-glow);
+            color: #fff;
+            box-shadow: 0 0 18px rgba(91, 141, 239, 0.5);
+            transform: scale(1.08);
+        }
+        .input-dot.direction-pressed {
             background: var(--finger-down);
             border-color: var(--finger-down-glow);
             color: #fff;
@@ -1189,11 +1412,99 @@
             font-size: 0.9rem;
         }
 
+        /* direction dots – hidden by default, shown only in full mode */
+        .direction-dot {
+            display: none;
+        }
+        .full-mode .direction-dot {
+            display: flex;
+        }
+
+        /* extra space between fingers and directions in full mode */
+        .full-mode .finger-dots .input-dot[data-finger="4"] {
+            margin-right: 20px;
+        }
+        .full-mode .finger-dots .target-dot[data-finger="4"] {
+            margin-right: 20px;
+        }
+
+        /* smooth transition for direction movement */
+        .input-dot.direction-dot,
+        .target-dot.direction-dot {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s, border-color 0.2s, box-shadow 0.2s, color 0.2s;
+        }
+
+        /* ---------------------- Chat Touch Grid ----------------------- */
+        #chatTouchGrid {
+            display: none;
+            flex-direction: column;
+            width: 100vw;
+            height: calc(100vh - 60px); /* под шапку */
+            margin: 0;
+            padding: 0;
+        }
+        .touch-chat-row {
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-items: stretch;
+            gap: 4px;
+        }
+        .touch-chat-row.receive-row {
+            height: 33.33%;
+        }
+        .touch-chat-row.send-row {
+            height: 66.66%;
+        }
+        .touch-chat-cell {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #8888aa;
+            background: var(--finger-up);
+            border: 2px solid var(--finger-up-border);
+            border-radius: 12px;
+            margin: 2px;
+            transition: all 0.1s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .touch-chat-cell.receive-cell {
+            background: var(--finger-target);
+            border-color: #3a3a5c;
+            color: #7777a0;
+        }
+        .touch-chat-cell.receive-cell.lit {
+            background: #ffffff;
+            border-color: #ffffff;
+            box-shadow: 0 0 24px rgba(255, 255, 255, 0.9);
+            color: #000;
+        }
+        .touch-chat-cell.send-cell.pressed {
+            background: var(--finger-down);
+            border-color: var(--finger-down-glow);
+            color: #fff;
+            box-shadow: 0 0 18px rgba(91, 141, 239, 0.7);
+            transform: scale(0.97);
+        }
+
+        /* mobile overrides */
         @media (max-width: 500px) {
             .letter-display {
                 font-size: 5rem;
                 min-height: 90px;
                 margin-bottom: 12px;
+            }
+            .letter-display .lang-flag {
+                font-size: 1.3rem;
+                right: -5px;
+            }
+            .lang-flag-status {
+                font-size: 1.2rem;
             }
             .finger-dot {
                 width: 32px;
@@ -1202,6 +1513,12 @@
             }
             .finger-dots {
                 gap: 6px;
+            }
+            .full-mode .finger-dots .input-dot[data-finger="4"] {
+                margin-right: 12px;
+            }
+            .full-mode .finger-dots .target-dot[data-finger="4"] {
+                margin-right: 12px;
             }
             .main-card {
                 padding: 20px 14px 16px;
@@ -1243,14 +1560,15 @@
             .instruction-row {
                 gap: 6px;
             }
-            .menu-btn {
+            .menu-btn,
+            .menu-btn-alt {
                 width: 44px;
                 height: 44px;
                 font-size: 1.2rem;
             }
             .menu-dropdown {
                 min-width: 180px;
-                right: 0;
+                right: 0 !important;
             }
             .receive-dot {
                 width: 40px;
@@ -1313,6 +1631,46 @@
                 width: 36px;
                 height: 36px;
             }
+            .chat-controls .chat-peer-input {
+                width: 100px;
+                font-size: 0.7rem;
+                padding: 4px 8px;
+            }
+            .chat-controls .peer-id-value {
+                font-size: 0.75rem;
+            }
+            .chat-controls .chat-icon-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+            .chat-control-group .chat-peer-input {
+                width: 80px;
+                font-size: 0.7rem;
+            }
+            .chat-control-group .chat-icon-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 0.9rem;
+            }
+            .chat-control-group {
+                padding: 2px 8px 2px 12px;
+            }
+            #menuConnectionSection .chat-icon-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 0.9rem;
+            }
+            #menuConnectionSection .chat-peer-input {
+                width: 70px;
+            }
+            #chatTouchGrid {
+                height: calc(100vh - 50px);
+            }
+            .touch-chat-cell {
+                font-size: 1rem;
+                border-radius: 8px;
+            }
         }
         @media (max-width: 380px) {
             .pattern-label {
@@ -1361,6 +1719,7 @@
             }
             .menu-dropdown {
                 min-width: 160px;
+                right: 0 !important;
             }
             .menu-item {
                 font-size: 0.75rem;
@@ -1392,6 +1751,15 @@
                 width: 32px;
                 height: 32px;
             }
+            .chat-controls .chat-peer-input {
+                width: 80px;
+            }
+            .chat-control-group .chat-peer-input {
+                width: 70px;
+            }
+            .touch-chat-cell {
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -1400,6 +1768,7 @@
         <div class="header">
             <div class="title-area">
                 <div class="title">Азбука Меченова-Кадачиговой</div>
+                <button class="menu-btn menu-btn-alt" id="menuBtnAlt" title="Меню" style="display:none;">⋮</button>
             </div>
             <div class="header-right">
                 <div class="badge streak-badge" id="streakBadge">
@@ -1414,6 +1783,24 @@
                     <span class="badge-icon">⚠️</span>
                     <span class="badge-value" id="hintBadgeValue">Рекорд не записывается</span>
                 </div>
+
+                <!-- Chat controls (скрыты, всё управление в меню) -->
+                <div class="chat-controls" id="chatControls" style="display:none;">
+                    <!-- Группа "Ваш ID" + копировать -->
+                    <div class="chat-control-group">
+                        <span class="peer-id-label">Ваш ID:</span>
+                        <span class="peer-id-value" id="peerIdDisplay"></span>
+                        <button class="chat-icon-btn" id="copyPeerIdBtn" title="Копировать ID">📋</button>
+                    </div>
+                    <!-- Группа "ID друга" + подключиться -->
+                    <div class="chat-control-group">
+                        <span class="peer-id-label">ID друга:</span>
+                        <input type="text" id="remotePeerIdInput" class="chat-peer-input" placeholder="ID друга">
+                        <button class="chat-icon-btn" id="connectPeerBtn" title="Подключиться">🔗</button>
+                        <button class="chat-icon-btn" id="disconnectPeerBtn" title="Отключиться" style="display:none;">🟢</button>
+                    </div>
+                </div>
+
                 <button class="menu-btn" id="menuBtn" title="Меню">⋮</button>
                 <div class="menu-dropdown" id="menuDropdown">
                     <div class="menu-section">
@@ -1436,6 +1823,11 @@
                             <span class="menu-item-icon">🕮</span>
                             <span class="menu-item-label">Словарь</span>
                         </button>
+                        <button class="menu-item mode-item" data-mode="full">
+                            <span class="menu-item-radio" id="radioFull">○</span>
+                            <span class="menu-item-icon">★</span>
+                            <span class="menu-item-label">Полный</span>
+                        </button>
                         <button class="menu-item mode-item" data-mode="chat">
                             <span class="menu-item-radio" id="radioChat">○</span>
                             <span class="menu-item-icon">💬</span>
@@ -1451,6 +1843,21 @@
                         </button>
                     </div>
                     <div class="menu-divider"></div>
+                    <!-- Секция "Подключение" только в режиме чата, без лишней подписи -->
+                    <div class="menu-section" id="menuConnectionSection" style="display:none;">
+                        <div class="menu-section-header">Подключение</div>
+                        <div class="menu-item">
+                            <span class="menu-item-label">Ваш ID:</span>
+                            <span class="peer-id-value" id="peerIdDisplayMenu"></span>
+                            <button class="chat-icon-btn" id="copyPeerIdBtnMenu" style="margin-left:auto;">📋</button>
+                        </div>
+                        <div class="menu-item" style="display: flex; gap: 4px;">
+                            <span class="menu-item-label">ID друга:</span>
+                            <input type="text" id="remotePeerIdInputMenu" class="chat-peer-input" placeholder="ID друга">
+                            <button class="chat-icon-btn" id="connectPeerBtnMenu">🔗</button>
+                            <button class="chat-icon-btn" id="disconnectPeerBtnMenu" style="display:none;">🟢</button>
+                        </div>
+                    </div>
                     <div class="menu-section">
                         <button class="menu-item" id="menuInfo">
                             <span class="menu-item-icon">ℹ</span>
@@ -1468,7 +1875,7 @@
         <div class="content-area" id="contentArea">
             <div class="main-card" id="mainCard">
                 <div id="modeSendArea">
-                    <div class="letter-display" id="letterDisplay">А</div>
+                    <div class="letter-display" id="letterDisplay"><span class="letter-inner">А</span></div>
                     <div class="receive-area" id="receiveArea" style="display:none;">
                         <div class="finger-dots receive-dots" id="receiveDots">
                             <div class="finger-dot receive-dot"></div>
@@ -1484,7 +1891,10 @@
                     </div>
                 </div>
 
-                <div class="status-text" id="statusText"></div>
+                <div class="status-text" id="statusText">
+                    <!-- Флаг будет динамически добавляться сюда через JS в полном режиме -->
+                    <span id="langFlagStatus" class="lang-flag-status"></span>
+                </div>
 
                 <div class="patterns-section" id="patternsSection">
                     <div class="hint-row-wrapper" id="hintWrapper">
@@ -1496,6 +1906,9 @@
                                 <div class="finger-dot target-dot" data-finger="2">С</div>
                                 <div class="finger-dot target-dot" data-finger="3">Б</div>
                                 <div class="finger-dot target-dot" data-finger="4">М</div>
+                                <!-- direction dots (hidden by default) -->
+                                <div class="finger-dot target-dot direction-dot" data-dir="<">&lt;</div>
+                                <div class="finger-dot target-dot direction-dot" data-dir=">">&gt;</div>
                             </div>
                             <div class="hint-placeholder"></div>
                         </div>
@@ -1508,6 +1921,9 @@
                             <div class="finger-dot input-dot" data-finger="2">С</div>
                             <div class="finger-dot input-dot" data-finger="3">Б</div>
                             <div class="finger-dot input-dot" data-finger="4">М</div>
+                            <!-- direction dots (hidden by default) -->
+                            <div class="finger-dot input-dot direction-dot" data-dir="<">&lt;</div>
+                            <div class="finger-dot input-dot direction-dot" data-dir=">">&gt;</div>
                         </div>
                         <div class="hint-placeholder"></div>
                     </div>
@@ -1554,17 +1970,9 @@
                 </div>
             </div>
 
-            <!-- Chat container (PeerJS communication mode) -->
+            <!-- Chat container (old circles) -->
             <div id="chatContainer" style="display:none; width:100%; max-width:600px; margin: 20px auto 0; text-align:center;">
-                <div class="chat-controls-row">
-                    <span style="color:var(--text-secondary); font-size:0.85rem;">Ваш ID:</span>
-                    <span id="peerIdDisplay" style="font-weight:bold; color:var(--accent-glow); user-select:all; font-size:0.9rem;"></span>
-                    <button id="copyPeerIdBtn" class="chat-icon-btn" title="Копировать ID">📋</button>
-                    <input type="text" id="remotePeerIdInput" class="chat-peer-input" placeholder="ID собеседника">
-                    <button id="connectPeerBtn" class="chat-icon-btn" title="Подключиться">🔗</button>
-                    <button id="disconnectPeerBtn" class="chat-icon-btn" title="Отключиться" style="display:none;">🟢</button>
-                </div>
-                <div class="instruction-box" style="margin-top:20px;">
+                <div class="instruction-box" style="margin-top:0;">
                     <div class="chat-circles">
                         <div class="chat-receive-row" id="chatReceiveDots">
                             <div class="chat-circle receive-circle" data-bit="0"></div>
@@ -1581,6 +1989,24 @@
                             <div class="chat-circle send-circle" data-bit="4"></div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Chat Touch Grid (only for mobile devices in chat mode) -->
+            <div id="chatTouchGrid" style="display:none;">
+                <div class="touch-chat-row receive-row" id="touchReceiveRow">
+                    <div class="touch-chat-cell receive-cell" data-bit="0">Бп</div>
+                    <div class="touch-chat-cell receive-cell" data-bit="1">У</div>
+                    <div class="touch-chat-cell receive-cell" data-bit="2">С</div>
+                    <div class="touch-chat-cell receive-cell" data-bit="3">Б</div>
+                    <div class="touch-chat-cell receive-cell" data-bit="4">М</div>
+                </div>
+                <div class="touch-chat-row send-row" id="touchSendRow">
+                    <div class="touch-chat-cell send-cell" data-bit="0">Бп</div>
+                    <div class="touch-chat-cell send-cell" data-bit="1">У</div>
+                    <div class="touch-chat-cell send-cell" data-bit="2">С</div>
+                    <div class="touch-chat-cell send-cell" data-bit="3">Б</div>
+                    <div class="touch-chat-cell send-cell" data-bit="4">М</div>
                 </div>
             </div>
         </div>
@@ -1630,7 +2056,6 @@
                 _playClick();
             }
 
-            // Original two‑note correct sound (restored)
             function playCorrect() {
                 if (!soundEnabled) return;
                 try {
@@ -1796,10 +2221,8 @@
             const defaultTopEn = ['N', 'I', 'V', 'O', 'U', 'R', 'Q', 'E', 'P', 'D', 'Y', 'S', 'J', 'X', ' '];
             const defaultBottomEn = ['A', 'M', 'K', ' ', 'L', 'H', 'B', 'C', 'T', 'Z', 'G', ' ', 'W', 'F', ' ', ' '];
 
-            // ---- English words for dictionary mode (11 words) ----
-            const englishWords = 'ABILITY ACT ACTION ACTIVITY ACTOR ADDRESS ADULT ADVANTAGE ADVICE AFFAIR AGE AGREEMENT AIR AIRPORT ALARM AMOUNT ANALYSIS ANIMAL ANSWER APPEAL APPLE APPLICATION APPROACH AREA ARM ARMY ART ARTICLE ASSOCIATION ATTACK ATTEMPT ATTENTION ATTITUDE AUTHOR AUTHORITY AWARD BABY BACK BACKGROUND BAG BALANCE BALL BAND BANK BAR BASE BASIS BASKET BATH BATTLE BEACH BEAR BEAUTY BED BEE BEER BELL BELT BENCH BENEFIT BICYCLE BILL BIRD BIRTH BIT BITE BLADE BLOOD BOARD BOAT BODY BONE BOOK BOOT BORDER BOTTLE BOTTOM BOWL BOX BOY BRAIN BRANCH BREAD BREAK BRIDGE BROTHER BRUSH BUDGET BUILDING BULB BUS BUSINESS BUTTON BUYER CAKE CAMERA CAMP CAMPAIGN CAPITAL CAR CARD CARE CARPET CART CASE CAT CAUSE CEILING CELL CENTER CENTRE CENTURY CHAIN CHAIR CHAIRMAN CHANCE CHANGE CHAPTER CHART CHECK CHEESE CHEST CHICKEN CHILD CHIN CHURCH CIRCLE CITY CLASS CLOCK CLOUD CLUB COAT COFFEE COLD COLLAR COLLEGE COLOR COLOUR COMB COMEDY COMFORT COMMAND COMMISSION COMMITTEE COMMUNITY COMPANY COMPETITION COMPLAINT COMPUTER CONCEPT CONDITION CONFERENCE CONNECTION CONSEQUENCE CONTROL COOK COPPER COPY CORN COST COTTON COUGH COUNCIL COUNTRY COUNTY COUPLE COURSE COURT COVER COW CRACK CREDIT CRIME CROP CROSS CROWD CUP CUPBOARD CUSTOMER CUT CYCLE DAMAGE DANCE DANGER DATE DAUGHTER DAY DEATH DECISION DEFENCE DEFENSE DEGREE DEMAND DEPARTMENT DESIGN DESK DETAIL DEVELOPMENT DEVICE DIAMOND DIET DIFFERENCE DIFFICULTY DINNER DIRECTION DIRECTOR DIRT DISEASE DISH DISTANCE DISTRIBUTION DISTRICT DOCTOR DOG DOOR DOT DOUBT DRAWER DRESS DRINK DRIVE DROP DRUM DUST DUTY EAR EARTH EAST EDGE EDUCATION EFFECT EGG ELECTION ELECTRICITY EMPLOYEE EMPLOYER EMPLOYMENT END ENERGY ENGINE ENTRANCE ENVIRONMENT ERROR ESTATE EVENING EVENT EVIDENCE EXAMPLE EXCHANGE EXECUTIVE EXERCISE EXPERIENCE EXPERT EXTENT EYE FACE FACT FACTORY FAMILY FARMER FASHION FATHER FEAR FEATHER FEELING FIELD FIGHT FIGURE FILM FINGER FIRE FIRM FISH FLAG FLAME FLOOR FLOWER FLY FOOD FOOT FORCE FOREST FORK FORM FORTUNE FRAME FRIEND FRONT FRUIT FUEL FUN FUNCTION FUND FUTURE GAME GARDEN GAS GATE GEAR GIRL GLASS GLOVE GOAL GOAT GOD GOLD GOOD GOVERNMENT GRAIN GRASS GROUND GROUP GROWTH GUEST GUIDE GUN HAIR HALF HALL HAMMER HAND HANDLE HAT HATE HEAD HEALTH HEART HEAT HEIGHT HELP HILL HISTORY HOBBY HOLE HOLIDAY HOME HONEY HOOK HOPE HORSE HOSPITAL HOST HOTEL HOUR HOUSE HOUSING HUMAN HUSBAND IDEA IMAGE IMPACT IMPORTANCE INCOME INCREASE INDUSTRY INFORMATION INSTANCE INTEREST INVESTMENT ISSUE JOB JOHN JOY JUDGE JUNIOR JUSTICE KEY KID KIND KING KNOWLEDGE LABOUR LADY LAND LANGUAGE LAW LAWYER LEADER LEAGUE LEARNING LEG LENGTH LEVEL LIBRARY LIFE LIGHT LINE LIST LITERATURE LIVING LOCAL LOCATION LONG LOOK LORD LOSS LOVE MACHINE MAGAZINE MAIL MAIN MAJOR MAJORITY MAKER MAN MANAGEMENT MANAGER MANNER MANUFACTURER MANY MAP MARCH MARK MARKET MASTER MATCH MATTER MAY MEAT MEDIA MEETING MEMBER MEMORY MEN MIND MINISTER MINUTE MISS MODEL MOMENT MONEY MONTH MORNING MOTHER MOTION MOVE MOVEMENT MUSIC NAME NATION NATURE NEED NETWORK NEWS NIGHT NORTH NOTE NOTHING NUMBER OBJECT OBSERVATION OFFER OFFICE OFFICER OIL ONE OPERATION OPINION OPPORTUNITY OPTION ORDER ORGANISATION OTHER OUTCOME OUTSIDE OWNER PAGE PAIN PAPER PARENT PARK PARLIAMENT PART PARTNER PARTY PASSAGE PAST PATENT PATH PATIENT PATTERN PAUL PAY PEACE PEOPLE PER PERFORMANCE PERIOD PERSON PHASE PHONE PHOTO PIECE PLACE PLAN PLANE PLANT PLAY PLAYER PLEASE PLEASURE POINT POLICE POLICY POLITICS POOR POPULATION POSITION POSSIBILITY POST POUND POWER PRACTICE PRESIDENT PRESS PRESSURE PRICE PRIME PRINCIPLE PRIORITY PRISON PRIVATE PRIZE PROBLEM PROCESS PRODUCTION PRODUCT PROFESSOR PROFIT PROGRAM PROGRESS PROJECT PROPERTY PROPOSAL PROSPECT PROTECTION PROTEST PROVIDER PUBLIC PULL PURPOSE PURSUIT PUSH QUALITY QUARTER QUESTION RACE RADIO RAIL RAIN RANGE RATE READER READING REALITY REASON RECORD REDUCTION REFERENCE REFORM REGION REGULATION RELATION RELATIONSHIP RELIGION REMAIN RENT REPAIR REPEAT REPORT REPRESENTATIVE REQUEST RESEARCH RESERVE RESIDENT RESISTANCE RESOLUTION RESOURCE RESPONSE RESPONSIBILITY REST RESULT RETURN REVIEW REVOLUTION RIGHT RISK RIVER ROAD ROLE ROOM RULE RUN SAFETY SALE SAMPLE SCALE SCENE SCHEDULE SCHEME SCHOOL SCIENCE SCOPE SCORE SEA SEASON SEAT SECOND SECRET SECRETARY SECTION SECTOR SECURITY SELECTION SELF SENSE SERIES SERVICE SESSION SET SETTING SEX SHARE SHEET SHIP SHIRT SHOCK SHOES SHOP SHOPPING SHOT SHOULDER SHOW SIDE SIGHT SIGN SIGNAL SILENCE SIR SISTER SITE SITUATION SIZE SKILL SKIN SMITH SOCIETY SOFTWARE SON SONG SORT SOUND SOURCE SOUTH SPACE SPEAKER SPECIAL SPECIES SPEECH SPEED SPIRIT SPOKESMAN SPREAD SPRING SQUARE ST STAFF STAGE STANDARD STAR START STATE STATEMENT STATION STATUS STEP STICK STOCK STOP STORE STORM STORY STRAIN STRATEGY STREET STRENGTH STRESS STRIKE STRUCTURE STRUGGLE STUDENT STUDY STUFF STYLE SUBJECT SUCCESS SUMMER SUN SUPPLY SUPPORT SURFACE SURPRISE SURVEY SWITCH SYSTEM TABLE TACKLE TAIL TAKE TALK TASK TAX TEA TEACHER TEAM TECHNIQUE TECHNOLOGY TELEVISION TEMPERATURE TENNIS TERM TEST TEXT THEORY THING THOUGHT THREAT TICKET TIME TITLE TODAY TOM TOMORROW TONIGHT TOP TOTAL TOUCH TOUR TOWN TRACK TRADE TRADITION TRAFFIC TRAIN TRAINING TRANSPORT TRAVEL TREASURE TREAT TREATMENT TREE TRIAL TRIP TROUBLE TRUST TRUTH TURN TV TYPE UNION UNIT UNIVERSITY USE USER UTILITY VACATION VALUE VARIETY VERSION VICTIM VICTORY VIEW VILLAGE VIOLENCE VISION VISIT VOICE VOLUME VOTE WAGE WAIT WALK WALL WAR WARD WARM WARNING WASH WASTE WATCH WATER WAVE WAY WEAKNESS WEALTH WEAPON WEAR WEATHER WEB WEDDING WEEK WEEKEND WEIGHT WEST WHITE WIFE WILD WILL WIN WINDOW WINTER WIRE WISH WOMAN WONDER WOOD WORD WORK WORKER WORKING WORLD WORRY WORTH WRITER WRITING YEAR YOUTH'.split(' ');
+            const englishWords = 'ABILITY ACT ACTION ACTIVITY ACTOR ADDRESS ADULT ADVANTAGE ADVICE AFFAIR AGE AGREEMENT AIR AIRPORT ALARM AMOUNT ANALYSIS ANIMAL ANSWER APPEAL APPLE APPLICATION APPROACH AREA ARM ARMY ART ARTICLE ASSOCIATION ATTACK ATTEMPT ATTENTION ATTITUDE AUTHOR AUTHORITY AWARD BABY BACK BACKGROUND BAG BALANCE BALL BAND BANK BAR BASE BASIS BASKET BATH BATTLE BEACH BEAR BEAUTY BED BEE BEER BELL BELT BENCH BENEFIT BICYCLE BILL BIRD BIRTH BIT BITE BLADE BLOOD BOARD BOAT BODY BONE BOOK BOOT BORDER BOTTLE BOTTOM BOWL BOX BOY BRAIN BRANCH BREAD BREAK BRIDGE BROTHER BRUSH BUDGET BUILDING BULB BUS BUSINESS BUTTON BUYER CAKE CAMERA CAMP CAMPAIGN CAPITAL CAR CARD CARE CARPET CART CASE CAT CAUSE CEILING CELL CENTER CENTRE CENTURY CHAIN CHAIR CHAIRMAN CHANCE CHANGE CHAPTER CHART CHECK CHEESE CHEST CHICKEN CHILD CHIN CHURCH CIRCLE CITY CLASS CLOCK CLOUD CLUB COAT COFFEE COLD COLLAR COLLEGE COLOR COLOUR COMB COMEDY COMFORT COMMAND COMMISSION COMMITTEE COMMUNITY COMPANY COMPETITION COMPLAINT COMPUTER CONCEPT CONDITION CONFERENCE CONNECTION CONSEQUENCE CONTROL COOK COPPER COPY CORN COST COTTON COUGH COUNCIL COUNTRY COUNTY COUPLE COURSE COURT COVER COW CRACK CREDIT CRIME CROP CROSS CROWD CUP CUPBOARD CUSTOMER CUT CYCLE DAMAGE DANCE DANGER DATE DAUGHTER DAY DEATH DECISION DEFENCE DEFENSE DEGREE DEMAND DEPARTMENT DESIGN DESK DETAIL DEVELOPMENT DEVICE DIAMOND DIET DIFFERENCE DIFFICULTY DINNER DIRECTION DIRECTOR DIRT DISEASE DISH DISTANCE DISTRIBUTION DISTRICT DOCTOR DOG DOOR DOT DOUBT DRAWER DRESS DRINK DRIVE DROP DRUM DUST DUTY EAR EARTH EAST EDGE EDUCATION EFFECT EGG ELECTION ELECTRICITY EMPLOYEE EMPLOYER EMPLOYMENT END ENERGY ENGINE ENTRANCE ENVIRONMENT ERROR ESTATE EVENING EVENT EVIDENCE EXAMPLE EXCHANGE EXECUTIVE EXERCISE EXPERIENCE EXPERT EXTENT EYE FACE FACT FACTORY FAMILY FARMER FASHION FATHER FEAR FEATHER FEELING FIELD FIGHT FIGURE FILM FINGER FIRE FIRM FISH FLAG FLAME FLOOR FLOWER FLY FOOD FOOT FORCE FOREST FORK FORM FORTUNE FRAME FRIEND FRONT FRUIT FUEL FUN FUNCTION FUND FUTURE GAME GARDEN GAS GATE GEAR GIRL GLASS GLOVE GOAL GOAT GOD GOLD GOOD GOVERNMENT GRAIN GRASS GROUND GROUP GROWTH GUEST GUIDE GUN HAIR HALF HALL HAMMER HAND HANDLE HAT HATE HEAD HEALTH HEART HEAT HEIGHT HELP HILL HISTORY HOBBY HOLE HOLIDAY HOME HONEY HOOK HOPE HORSE HOSPITAL HOST HOTEL HOUR HOUSE HOUSING HUMAN HUSBAND IDEA IMAGE IMPACT IMPORTANCE INCOME INCREASE INDUSTRY INFORMATION INSTANCE INTEREST INVESTMENT ISSUE JOB JOHN JOY JUDGE JUNIOR JUSTICE KEY KID KIND KING KNOWLEDGE LABOUR LADY LAND LANGUAGE LAW LAWYER LEADER LEAGUE LEARNING LEG LENGTH LEVEL LIBRARY LIFE LIGHT LINE LIST LITERATURE LIVING LOCAL LOCATION LONG LOOK LORD LOSS LOVE MACHINE MAGAZINE MAIL MAIN MAJOR MAJORITY MAKER MAN MANAGEMENT MANAGER MANNER MANUFACTURER MANY MAP MARCH MARK MARKET MASTER MATCH MATTER MAY MEAT MECHKAD MEDIA MEETING MEMBER MEMORY MEN MIND MINISTER MINUTE MISS MODEL MOMENT MONEY MONTH MORNING MOTHER MOTION MOVE MOVEMENT MUSIC NAME NATION NATURE NEED NETWORK NEWS NIGHT NORTH NOTE NOTHING NUMBER OBJECT OBSERVATION OFFER OFFICE OFFICER OIL ONE OPERATION OPINION OPPORTUNITY OPTION ORDER ORGANISATION OTHER OUTCOME OUTSIDE OWNER PAGE PAIN PAPER PARENT PARK PARLIAMENT PART PARTNER PARTY PASSAGE PAST PATENT PATH PATIENT PATTERN PAUL PAY PEACE PEOPLE PER PERFORMANCE PERIOD PERSON PHASE PHONE PHOTO PIECE PLACE PLAN PLANE PLANT PLAY PLAYER PLEASE PLEASURE POINT POLICE POLICY POLITICS POOR POPULATION POSITION POSSIBILITY POST POUND POWER PRACTICE PRESIDENT PRESS PRESSURE PRICE PRIME PRINCIPLE PRIORITY PRISON PRIVATE PRIZE PROBLEM PROCESS PRODUCTION PRODUCT PROFESSOR PROFIT PROGRAM PROGRESS PROJECT PROPERTY PROPOSAL PROSPECT PROTECTION PROTEST PROVIDER PUBLIC PULL PURPOSE PURSUIT PUSH QUALITY QUARTER QUESTION RACE RADIO RAIL RAIN RANGE RATE READER READING REALITY REASON RECORD REDUCTION REFERENCE REFORM REGION REGULATION RELATION RELATIONSHIP RELIGION REMAIN RENT REPAIR REPEAT REPORT REPRESENTATIVE REQUEST RESEARCH RESERVE RESIDENT RESISTANCE RESOLUTION RESOURCE RESPONSE RESPONSIBILITY REST RESULT RETURN REVIEW REVOLUTION RIGHT RISK RIVER ROAD ROLE ROOM RULE RUN SAFETY SALE SAMPLE SCALE SCENE SCHEDULE SCHEME SCHOOL SCIENCE SCOPE SCORE SEA SEASON SEAT SECOND SECRET SECRETARY SECTION SECTOR SECURITY SELECTION SELF SENSE SERIES SERVICE SESSION SET SETTING SEX SHARE SHEET SHIP SHIRT SHOCK SHOES SHOP SHOPPING SHOT SHOULDER SHOW SIDE SIGHT SIGN SIGNAL SILENCE SIR SISTER SITE SITUATION SIZE SKILL SKIN SMITH SOCIETY SOFTWARE SON SONG SORT SOUND SOURCE SOUTH SPACE SPEAKER SPECIAL SPECIES SPEECH SPEED SPIRIT SPOKESMAN SPREAD SPRING SQUARE ST STAFF STAGE STANDARD STAR START STATE STATEMENT STATION STATUS STEP STICK STOCK STOP STORE STORM STORY STRAIN STRATEGY STREET STRENGTH STRESS STRIKE STRUCTURE STRUGGLE STUDENT STUDY STUFF STYLE SUBJECT SUCCESS SUMMER SUN SUPPLY SUPPORT SURFACE SURPRISE SURVEY SWITCH SYSTEM TABLE TACKLE TAIL TAKE TALK TASK TAX TEA TEACHER TEAM TECHNIQUE TECHNOLOGY TELEVISION TEMPERATURE TENNIS TERM TEST TEXT THEORY THING THOUGHT THREAT TICKET TIME TITLE TODAY TOM TOMORROW TONIGHT TOP TOTAL TOUCH TOUR TOWN TRACK TRADE TRADITION TRAFFIC TRAIN TRAINING TRANSPORT TRAVEL TREASURE TREAT TREATMENT TREE TRIAL TRIP TROUBLE TRUST TRUTH TURN TV TYPE UNION UNIT UNIVERSITY USE USER UTILITY VACATION VALUE VARIETY VERSION VICTIM VICTORY VIEW VILLAGE VIOLENCE VISION VISIT VOICE VOLUME VOTE WAGE WAIT WALK WALL WAR WARD WARM WARNING WASH WASTE WATCH WATER WAVE WAY WEAKNESS WEALTH WEAPON WEAR WEATHER WEB WEDDING WEEK WEEKEND WEIGHT WEST WHITE WIFE WILD WILL WIN WINDOW WINTER WIRE WISH WOMAN WONDER WOOD WORD WORK WORKER WORKING WORLD WORRY WORTH WRITER WRITING YEAR YOUTH'.split(' ');
 
-            // ---- Russian words (existing) ----
             const russianWords = 'ГОД ЧЕЛОВЕК ВРЕМЯ ДЕЛО ЖИЗНЬ ДЕНЬ РУКА РАЗ РАБОТА СЛОВО МЕСТО ЛИЦО ДРУГ ГЛАЗ ВОПРОС ДОМ СТОРОНА СТРАНА МИР СЛУЧАЙ ГОЛОВА РЕБЕНОК СИЛА КОНЕЦ ВИД СИСТЕМА ЧАСТЬ ГОРОД ОТНОШЕНИЕ ЖЕНЩИНА ДЕНЬГИ ЗЕМЛЯ МАШИНА ВОДА ОТЕЦ ПРОБЛЕМА ЧАС ПРАВО НОГА РЕШЕНИЕ ДВЕРЬ ОБРАЗ ИСТОРИЯ ВЛАСТЬ ЗАКОН ВОЙНА БОГ ГОЛОС ТЫСЯЧА КНИГА ВОЗМОЖНОСТЬ РЕЗУЛЬТАТ НОЧЬ СТОЛ ИМЯ ОБЛАСТЬ СТАТЬЯ ЧИСЛО КОМПАНИЯ НАРОД ЖЕНА ГРУППА РАЗВИТИЕ ПРОЦЕСС СУД УСЛОВИЕ СРЕДСТВО НАЧАЛО СВЕТ ПОРА ПУТЬ ДУША УРОВЕНЬ ФОРМА СВЯЗЬ МИНУТА УЛИЦА ВЕЧЕР КАЧЕСТВО МЫСЛЬ ДОРОГА МАТЬ ДЕЙСТВИЕ МЕСЯЦ ГОСУДАРСТВО ЯЗЫК ЛЮБОВЬ ВЗГЛЯД МАМА ВЕК ШКОЛА ЦЕЛЬ ОБЩЕСТВО ДЕЯТЕЛЬНОСТЬ ОРГАНИЗАЦИЯ ПРЕЗИДЕНТ КОМНАТА ПОРЯДОК МОМЕНТ ТЕАТР ПИСЬМО УТРО ПОМОЩЬ СИТУАЦИЯ РОЛЬ РУБЛЬ СМЫСЛ СОСТОЯНИЕ КВАРТИРА ОРГАН ВНИМАНИЕ ТЕЛО ТРУД СЫН МЕРА СМЕРТЬ РЫНОК ПРОГРАММА ЗАДАЧА ПРЕДПРИЯТИЕ ОКНО РАЗГОВОР ПРАВИТЕЛЬСТВО СЕМЬЯ ПРОИЗВОДСТВО ИНФОРМАЦИЯ ПОЛОЖЕНИЕ ЦЕНТР ОТВЕТ МУЖ АВТОР СТЕНА ИНТЕРЕС ФЕДЕРАЦИЯ ПРАВИЛО УПРАВЛЕНИЕ МУЖЧИНА ИДЕЯ ПАРТИЯ СОВЕТ СЧЕТ СЕРДЦЕ ДВИЖЕНИЕ ВЕЩЬ МАТЕРИАЛ НЕДЕЛЯ ЧУВСТВО ГЛАВА НАУКА РЯД ГАЗЕТА ПРИЧИНА ПЛЕЧО ЦЕНА ПЛАН РЕЧЬ ТОЧКА ОСНОВА ТОВАРИЩ КУЛЬТУРА ДАННЫЕ МНЕНИЕ ДОКУМЕНТ ИНСТИТУТ ХОД ПРОЕКТ ВСТРЕЧА ДИРЕКТОР СРОК ПАЛЕЦ ОПЫТ СЛУЖБА СУДЬБА ДЕВУШКА ОЧЕРЕДЬ ЛЕС СОСТАВ ЧЛЕН КОЛИЧЕСТВО СОБЫТИЕ ОБЪЕКТ ЗАЛ СОЗДАНИЕ ЗНАЧЕНИЕ ПЕРИОД ШАГ БРАТ ИСКУССТВО СТРУКТУРА НОМЕР ПРИМЕР ИССЛЕДОВАНИЕ ГРАЖДАНИН ИГРА НАЧАЛЬНИК РОСТ ТЕМА ПРИНЦИП МЕТОД ТИП ФИЛЬМ КРАЙ ГОСТЬ ВОЗДУХ ХАРАКТЕР БОРЬБА ИСПОЛЬЗОВАНИЕ РАЗМЕР ОБРАЗОВАНИЕ МАЛЬЧИК КРОВЬ РАЙОН НЕБО АРМИЯ КЛАСС ПРЕДСТАВИТЕЛЬ УЧАСТИЕ ДЕВОЧКА ПОЛИТИКА ГЕРОЙ КАРТИНА ДОЛЛАР СПИНА ТЕРРИТОРИЯ ПОЛ ПОЛЕ ИЗМЕНЕНИЕ НАПРАВЛЕНИЕ РИСУНОК ТЕЧЕНИЕ ЦЕРКОВЬ БАНК СЦЕНА НАСЕЛЕНИЕ БОЛЬШИНСТВО МУЗЫКА ПРАВДА СВОБОДА ПАМЯТЬ КОМАНДА СОЮЗ ВРАЧ ДОГОВОР ДЕРЕВО ФАКТ ХОЗЯИН ПРИРОДА УГОЛ ТЕЛЕФОН ПОЗИЦИЯ ДВОР ПИСАТЕЛЬ САМОЛЕТ ОБЪЕМ РОД СОЛНЦЕ ВЕРА БЕРЕГ СПЕКТАКЛЬ ФИРМА СПОСОБ ЗАВОД ЦВЕТ ЖУРНАЛ РУКОВОДИТЕЛЬ СПЕЦИАЛИСТ ОЦЕНКА РЕГИОН ПЕСНЯ ПРОЦЕНТ РОДИТЕЛЬ МОРЕ ТРЕБОВАНИЕ ОСНОВАНИЕ ПОЛОВИНА РОМАН КРУГ АНАЛИЗ СТИХИ АВТОМОБИЛЬ ЭКОНОМИКА ЛИТЕРАТУРА БУМАГА ПОЭТ СТЕПЕНЬ ГОСПОДИН НАДЕЖДА ПРЕДМЕТ ВАРИАНТ МИНИСТР ГРАНИЦА ДУХ МОДЕЛЬ ОПЕРАЦИЯ ПАРА СОН НАЗВАНИЕ УМ ПОВОД СТАРИК МИЛЛИОН УСПЕХ СЧАСТЬЕ РЕБЯТА КАБИНЕТ МАГАЗИН ПРОСТРАНСТВО ВЫХОД УДАР БАЗА ЗНАНИЕ ТЕКСТ ЗАЩИТА РУКОВОДСТВО ПЛОЩАДЬ СОЗНАНИЕ ВОЗРАСТ УЧАСТНИК УЧАСТОК ПУНКТ ЛИНИЯ ЖЕЛАНИЕ ПАПА ДОКТОР ГУБА ДОЧЬ СРЕДА ПРЕДСЕДАТЕЛЬ ПРЕДСТАВЛЕНИЕ СОЛДАТ ХУДОЖНИК ВОЛОС ОРУЖИЕ СООТВЕТСТВИЕ ВЕТЕР ПАРЕНЬ ЗРЕНИЕ ГЕНЕРАЛ ОГОНЬ ПОНЯТИЕ СТРОИТЕЛЬСТВО УХО ГРУДЬ НОС СТРАХ УСЛУГА СОДЕРЖАНИЕ РАДОСТЬ БЕЗОПАСНОСТЬ ПРОДУКТ КОМПЛЕКС БИЗНЕС САД СОТРУДНИК ЛЕТО КУРС ПРЕДЛОЖЕНИЕ РОТ ТЕХНОЛОГИЯ РЕФОРМА ОТСУТСТВИЕ СОБАКА КАМЕНЬ БУДУЩЕЕ РАССКАЗ КОНТРОЛЬ РЕКА ПРОДУКЦИЯ СУММА ТЕХНИКА ЗДАНИЕ СФЕРА НЕОБХОДИМОСТЬ ФОНД ПОДГОТОВКА ЛИСТ РЕСПУБЛИКА ХОЗЯЙСТВО ВОЛЯ БЮДЖЕТ СНЕГ ДЕРЕВНЯ МУЖИК ЭЛЕМЕНТ ОБСТОЯТЕЛЬСТВО НЕМЕЦ ПОБЕДА ИСТОЧНИК ЗВЕЗДА ВЫБОР МАССА ИТОГ СЕСТРА ПРАКТИКА ПРОВЕДЕНИЕ КАРМАН СЛАВА КУХНЯ ОПРЕДЕЛЕНИЕ ФУНКЦИЯ ВОЙСКО КОМИССИЯ ПРИМЕНЕНИЕ КАПИТАН РАБОТНИК ОБЕСПЕЧЕНИЕ ОФИЦЕР ФАМИЛИЯ ПРЕДЕЛ ВЫБОРЫ УЧЕНЫЙ БУТЫЛКА БОЙ ТЕОРИЯ ЗОНА ОТДЕЛ ЗУБ РАЗРАБОТКА ЛИЧНОСТЬ ГОРА ТОВАР МЕТР ПРАЗДНИК ВЛИЯНИЕ ЧИТАТЕЛЬ УДОВОЛЬСТВИЕ АКТЕР СЛЕЗА ОТВЕТСТВЕННОСТЬ УЧИТЕЛЬ АКТ БОЛЬ МНОЖЕСТВО ОСОБЕННОСТЬ ПОКАЗАТЕЛЬ КОРАБЛЬ ЗВУК ВПЕЧАТЛЕНИЕ ЧАСТНОСТЬ ДЕТСТВО ВЫВОД ПРОФЕССОР ДОЛЯ НОРМА ПРОШЛОЕ КОМАНДИР КОРИДОР ПОДДЕРЖКА РАМКА ВРАГ ЭТАП ЧЕРТ ДЕД СОБРАНИЕ ПРИЕМ БОЛЕЗНЬ КЛЕТКА КОЖА ЗАЯВЛЕНИЕ ПОПЫТКА СРАВНЕНИЕ РАСЧЕТ ДЕПУТАТ КОМИТЕТ ЗНАК ДЯДЯ УЧЕТ ХЛЕБ ЧАЙ РЕЖИМ ЦЕЛОЕ ВИРУС ВЫРАЖЕНИЕ ЗДОРОВЬЕ ЗИМА ДЕСЯТОК ГЛУБИНА СЕТЬ СТУДЕНТ СЕКУНДА СКОРОСТЬ ПОИСК СУТЬ НАЛОГ ОШИБКА ДОХОД РЕЖИССЕР ПОВЕРХНОСТЬ ОЩУЩЕНИЕ КАРТА КЛУБ СТАНЦИЯ РЕВОЛЮЦИЯ КОЛЕНО МИНИСТЕРСТВО СТЕКЛО ЭТАЖ ВЫСОТА БАБУШКА ТРУБКА ГАЗ МАСТЕР ПОВЕДЕНИЕ СТОЛИЦА МЕХАНИЗМ ПЕРЕДАЧА СПОСОБНОСТЬ ПОДХОД ЭНЕРГИЯ СУЩЕСТВОВАНИЕ ИСПОЛНЕНИЕ КИНО СОЖАЛЕНИЕ ЗАМЕСТИТЕЛЬ РЕСУРС АКЦИЯ РОЖДЕНИЕ АДМИНИСТРАЦИЯ СТОИМОСТЬ УЛЫБКА АРТИСТ СОСЕД ФРАЗА ФИГУРА СУБЪЕКТ РЕАКЦИЯ СПИСОК ФОТОГРАФИЯ ЖУРНАЛИСТ МАЙ НАРУШЕНИЕ ЗАСЕДАНИЕ ТОЛПА БОЛЬНИЦА СУЩЕСТВО СВОЙСТВО ДОЛГ ПОКОЛЕНИЕ ЖИВОТНОЕ СХЕМА УСИЛИЕ ОТЛИЧИЕ ОСТРОВ ПРОТИВНИК ВОЛНА РЕАЛИЗАЦИЯ СТРАНИЦА ФОРМИРОВАНИЕ ЖИТЕЛЬ КРАСОТА ПТИЦА РАСТЕНИЕ ТЕНЬ ЯВЛЕНИЕ ХРАМ ЗАПАХ ВОДКА НАЛИЧИЕ УЖАС ОДЕЖДА КРЕСЛО БОЛЬНОЙ ПОЕЗД УНИВЕРСИТЕТ ТРАДИЦИЯ АДРЕС ДЕКАБРЬ ЛАДОНЬ СВЕДЕНИЕ ЦВЕТОК ЛИДЕР ОКТЯБРЬ ЗАНЯТИЕ СЕНТЯБРЬ ПОМЕЩЕНИЕ ЯНВАРЬ ЗРИТЕЛЬ РЕДАКЦИЯ СТИЛЬ ВЕСНА ФАКТОР АВГУСТ ИЗВЕСТИЕ ЗАВИСИМОСТЬ ОХРАНА ОБОРУДОВАНИЕ КОНЦЕРТ ОТДЕЛЕНИЕ РАСХОД ВЫСТАВКА МИЛИЦИЯ ПЕРЕХОД ЭПОХА ЗАПАД ПРОИЗВЕДЕНИЕ РОДИНА СОБСТВЕННОСТЬ ТАЙНА ТРАВА ЛАГЕРЬ ИМУЩЕСТВО КРОВАТЬ АППАРАТ СЕРЕДИНА МАРТ КЛИЕНТ ДАМА ФРОНТ ОТРАСЛЬ СТУЛ БЕСЕДА ЗАКОНОДАТЕЛЬСТВО ПРОДАЖА ПОВЫШЕНИЕ МУЗЕЙ СЛЕД ПОЛКОВНИК СОМНЕНИЕ ПОНИМАНИЕ АПРЕЛЬ КНЯЗЬ РЫБА ДУМА КОДЕКС СУТКИ ЧУДО ШЕЯ СУДЬЯ КРЫША НАСТРОЕНИЕ ПОТОК ДОЛЖНОСТЬ ПРЕСТУПЛЕНИЕ МОЗГ ЧЕСТЬ ПОСТ ЕВРЕЙ ИЮНЬ СОТНЯ ДОЖДЬ ЛЕСТНИЦА ДАЧА УСТАНОВКА ПОЯВЛЕНИЕ ПОЛУЧЕНИЕ ОБРАЗЕЦ ТРУБА ГЛАВНОЕ ОСЕНЬ КОСТЮМ БАБА ЦЕННОСТЬ ОБЯЗАННОСТЬ ПЬЕСА ТАБЛИЦА ВИНО ВОСПОМИНАНИЕ ЛОШАДЬ КОЛЛЕГА ОРГАНИЗМ УЧЕНИК УЧРЕЖДЕНИЕ ОТКРЫТИЕ ТОМ ЧЕРТА ХАРАКТЕРИСТИКА ВЫПОЛНЕНИЕ ОБОРОНА ВЫСТУПЛЕНИЕ ТЕМПЕРАТУРА ПЕРСПЕКТИВА ПОДРУГА ПРИКАЗ ЖЕРТВА РЕСТОРАН КИЛОМЕТР СПОР ВКУС ПРИЗНАК ПРОМЫШЛЕННОСТЬ АМЕРИКАНЕЦ ЛОБ ЗАКЛЮЧЕНИЕ ВОСТОК ИСКЛЮЧЕНИЕ КЛЮЧ ПОСТАНОВЛЕНИЕ СЛОЙ БОК ИЮЛЬ ПЕРЕВОД СЕКРЕТАРЬ КУСОК СЛУХ ПОЛЬЗА ЗВОНОК ОБСТАНОВКА ЧИНОВНИК СОГЛАШЕНИЕ ДЕТАЛЬ РУССКИЙ ТИШИНА ЗАРПЛАТА БИЛЕТ ПОДАРОК ТЮРЬМА ЯЩИК КОНКУРС КНИЖКА ИЗУЧЕНИЕ ПРОСЬБА ЦАРЬ ПУБЛИКА СМЕХ СООБЩЕНИЕ УГРОЗА БЕДА БЛОК ДОСТИЖЕНИЕ НАЗНАЧЕНИЕ РЕКЛАМА ПОРТРЕТ МАСЛО СТАКАН УРОК ЧАСЫ КРИК ТВОРЧЕСТВО ТЕЛЕВИЗОР ИНСТРУМЕНТ КОНЦЕПЦИЯ ЛЕЙТЕНАНТ ЭКРАН ДНО РЕАЛЬНОСТЬ КАНАЛ МЯСО ЗНАКОМЫЙ ЩЕКА КОНФЛИКТ ПЕРЕГОВОРЫ ЗАПИСЬ ВАГОН ПЛОЩАДКА ПОСЛЕДСТВИЕ СОТРУДНИЧЕСТВО ЗЕРКАЛО ТОН АКАДЕМИЯ ПАЛАТА ПОТРЕБНОСТЬ НОЯБРЬ УВЕЛИЧЕНИЕ ДУРАК ПОЕЗДКА ОБЕД ПОТЕРЯ ФЕВРАЛЬ МЕРОПРИЯТИЕ ПАРК ПРИНЯТИЕ УСТРОЙСТВО ВЕЩЕСТВО КАТЕГОРИЯ СЕЗОН ГОСТИНИЦА ИЗДАНИЕ ОБЪЕДИНЕНИЕ ТЕМНОТА ЧЕЛОВЕЧЕСТВО КОЛЕСО ОПАСНОСТЬ РАЗРЕШЕНИЕ ВОЗДЕЙСТВИЕ КОЛЛЕКТИВ КАМЕРА ЗАПАС СЛЕДСТВИЕ ДЛИНА КРЫЛО ОКРУГ ФОН КАНДИДАТ РОДСТВЕННИК ДАВЛЕНИЕ ПРИСУТСТВИЕ ВЗАИМОДЕЙСТВИЕ ДОСКА ПАРТНЕР ДВИГАТЕЛЬ ШУМ ДОСТОИНСТВО ГРЕХ НОЖ ПОЛЕТ СТРАСТЬ ИСПЫТАНИЕ ИСТИНА ОПЛАТА РАЗНИЦА ВОДИТЕЛЬ ПАКЕТ СНИЖЕНИЕ ФОРМУЛА ЖИВОТ КАПИТАЛ МОСТ НОВОСТЬ ЭФФЕКТ ВХОД ГУБЕРНАТОР ДОКЛАД СМЕНА УБИЙСТВО ЭКСПЕРТ АВТОБУС ПЛАТЬЕ КАДР ТЕТЯ ОБЩЕНИЕ ПСИХОЛОГИЯ ЛЕВ ПОРОГ ПРОВЕРКА ПРОЦЕДУРА РАБОЧИЙ РЕМОНТ ОБРАЩЕНИЕ ОБУЧЕНИЕ ОЖИДАНИЕ ПАМЯТНИК КОРЕНЬ НАБЛЮДЕНИЕ БУКВА ДОКАЗАТЕЛЬСТВО ПРИЗНАНИЕ ПОСТЕЛЬ ШТАБ ВЛАДЕЛЕЦ КОМПЬЮТЕР ИНЖЕНЕР СТАРУХА ЛОДКА РАКЕТА СЕРИЯ ШУТКА ВЕРШИНА ВЫПУСК КУЛАК ЛЕД ТОРГОВЛЯ НЕФТЬ МОЛОДЕЖЬ ЦИФРА КОРПУС НЕДОСТАТОК САПОГ СУЩНОСТЬ ТАЛАНТ ЭФФЕКТИВНОСТЬ КОФЕ ПОЛОСА ОСНОВНОЕ РАССМОТРЕНИЕ СБОР ШТАТ СЛЕДОВАТЕЛЬ ЖИЛЬЕ МЕШОК ОПИСАНИЕ КУСТ ОТКАЗ ЗАМОК РЕДАКТОР ДВОРЕЦ ЗАБОТА ПИВО ДИВАН СТОЛИК ЭКСПЕРИМЕНТ ПЕЧАТЬ КОЛЬЦО ПИСТОЛЕТ ВОСПИТАНИЕ НАЧАЛЬСТВО ПРОФЕССИЯ ВОРОТА ДОБРО ДРУЖБА ПОКОЙ РИСК ОКОНЧАНИЕ ДЫМ БРАК ВЕЛИЧИНА ЗАПИСКА ИНИЦИАТИВА СОВЕСТЬ АКТИВНОСТЬ КОСТЬ СПОРТ КРЕДИТ ГОСПОДЬ МАЙОР КОНФЕРЕНЦИЯ ПОТОЛОК БИБЛИОТЕКА ПОМОЩНИК КОНСТРУКЦИЯ ОТДЫХ РУЧКА МЕТАЛЛ МОЛОКО ПРОКУРОР ТРАНСПОРТ ПОЭЗИЯ СОЕДИНЕНИЕ КРАСКА РАССТОЯНИЕ МЕЧТА СЕЛО ЕДА ЗЛО ПОДРАЗДЕЛЕНИЕ СЮЖЕТ РУБЕЖ СИГНАЛ АТМОСФЕРА КРЕСТ ВЕС ВЗРЫВ КОНТАКТ СИГАРЕТА ВОСТОРГ ЗОЛОТО ПОЧВА ПРЕМИЯ КОРОЛЬ ПОДЪЕЗД ШАНС АВТОМАТ ЗАКАЗ МАЛЬЧИШКА ОЧКИ МИГ ШТУКА ЧТЕНИЕ ПОСЕЛОК СВИДЕТЕЛЬ СТАВКА СУМКА УДИВЛЕНИЕ ХВОСТ ПЕСОК ПОВОРОТ ВОЗВРАЩЕНИЕ МГНОВЕНИЕ СТАТУС ОЗЕРО СТРОЙ ПАРАМЕТР СКАЗКА ТЕНДЕНЦИЯ ВИНА ДЫХАНИЕ ВЕРСИЯ МАСШТАБ МОНАСТЫРЬ ХОЗЯЙКА ДОЧКА ТАНЕЦ ЭКСПЛУАТАЦИЯ КОММУНИСТ ПЕНСИЯ ПРИЯТЕЛЬ ОБЪЯСНЕНИЕ НАБОР ПРОИЗВОДИТЕЛЬ ПЫЛЬ ФИЛОСОФИЯ МОЩНОСТЬ ОБЯЗАТЕЛЬСТВО УХОД ГОРЛО КРИЗИС УКАЗАНИЕ ПЛАТА ЯБЛОКО ПРЕПАРАТ ДЕЙСТВИТЕЛЬНОСТЬ МОСКВИЧ ОСТАТОК ИЗОБРАЖЕНИЕ СДЕЛКА СОЧИНЕНИЕ ПОКУПАТЕЛЬ ТАНК ЗАТРАТА СТРОКА ЕДИНИЦА'.split(' ');
 
             let letterCodes = letterCodesRu;
@@ -1876,8 +2299,75 @@
             const keyToBitLeft = { 'Space': 0, 'KeyF': 1, 'KeyD': 2, 'KeyS': 3, 'KeyA': 4 };
             const allRelevantCodes = new Set([...Object.keys(keyToBitRight), ...Object.keys(keyToBitLeft)]);
 
+            // ======================== FULL MODE SYMBOLS ========================
+            function buildFullSymbols() {
+                const symbols = [];
+
+                for (const [letter, code] of Object.entries(letterCodesRu)) {
+                    symbols.push({ symbol: letter, code: code, directions: '', lang: 'ru' });
+                }
+                for (const [letter, code] of Object.entries(letterCodesEn)) {
+                    symbols.push({ symbol: letter, code: code, directions: '', lang: 'en' });
+                }
+
+                const digits = [
+                    { symbol: '1', finger: 0, dir: '>' },
+                    { symbol: '2', finger: 1, dir: '>' },
+                    { symbol: '3', finger: 2, dir: '>' },
+                    { symbol: '4', finger: 3, dir: '>' },
+                    { symbol: '5', finger: 4, dir: '>' },
+                    { symbol: '6', finger: 0, dir: '<' },
+                    { symbol: '7', finger: 1, dir: '<' },
+                    { symbol: '8', finger: 2, dir: '<' },
+                    { symbol: '9', finger: 3, dir: '<' },
+                    { symbol: '0', finger: 4, dir: '<' }
+                ];
+                for (const d of digits) {
+                    const bits = [0,0,0,0,0];
+                    bits[d.finger] = 1;
+                    const code = bits.join('');
+                    symbols.push({ symbol: d.symbol, code: code, directions: d.dir, lang: null });
+                }
+
+                const punct = [
+                    { symbol: ',', code: '10000', directions: '<>' },
+                    { symbol: '.', code: '10000', directions: '><' },
+                    { symbol: '¿', code: '01000', directions: '<>' },
+                    { symbol: '?', code: '01000', directions: '><' },
+                    { symbol: '¡', code: '00100', directions: '<>' },
+                    { symbol: '!', code: '00100', directions: '><' },
+                    { symbol: ':', code: '00010', directions: '<>' },
+                    { symbol: '–', code: '00010', directions: '><' },
+                    { symbol: '(', code: '00001', directions: '<>' },
+                    { symbol: ')', code: '00001', directions: '><' },
+                    { symbol: '%', code: '11000', directions: '<' },
+                    { symbol: '°', code: '11000', directions: '>' },
+                    { symbol: '/', code: '01100', directions: '<' },
+                    { symbol: '"', code: '01100', directions: '>' },
+                    { symbol: '~', code: '10100', directions: '<' },
+                    { symbol: '+', code: '10100', directions: '>' },
+                    { symbol: '#', code: '11100', directions: '<' },
+                    { symbol: '*', code: '11100', directions: '>' },
+                    { symbol: '&', code: '10011', directions: '', lang: null },
+                    { symbol: '@', code: '11110', directions: '', lang: null },
+                    { symbol: '$', code: '01111', directions: '', lang: null },
+                    { symbol: '_', code: '11011', directions: '', lang: null },
+                    { symbol: "'", code: '11111', directions: '', lang: null },
+                    { symbol: 'Ё', code: '01100', directions: '><' },
+                    { symbol: 'Ъ', code: '01100', directions: '<>' }
+                ];
+                for (const p of punct) {
+                    symbols.push({ symbol: p.symbol, code: p.code, directions: p.directions || '', lang: null });
+                }
+
+                return symbols;
+            }
+
+            let fullSymbols = buildFullSymbols();
+
             // ======================== DOM refs ========================
             const letterDisplay = document.getElementById('letterDisplay');
+            const letterInner = letterDisplay.querySelector('.letter-inner');
             const receiveArea = document.getElementById('receiveArea');
             const receiveDotsContainer = document.getElementById('receiveDots');
             const receiveDots = [...receiveDotsContainer.children];
@@ -1888,6 +2378,7 @@
             const recordBadge = document.getElementById('recordBadge');
             const recordValue = document.getElementById('recordValue');
             const statusText = document.getElementById('statusText');
+            const langFlagStatus = document.getElementById('langFlagStatus');
             const targetDotsContainer = document.getElementById('targetDots');
             const inputDotsContainer = document.getElementById('inputDots');
             const hintWrapper = document.getElementById('hintWrapper');
@@ -1898,6 +2389,7 @@
             const alphabetButtons = document.getElementById('alphabetButtons');
             const alphabetGrid = document.getElementById('alphabetGrid');
             const menuBtn = document.getElementById('menuBtn');
+            const menuBtnAlt = document.getElementById('menuBtnAlt');
             const menuDropdown = document.getElementById('menuDropdown');
             const menuHintToggle = document.getElementById('menuHintToggle');
             const menuHintIcon = document.getElementById('menuHintIcon');
@@ -1918,6 +2410,7 @@
             const radioSend = document.getElementById('radioSend');
             const radioReceive = document.getElementById('radioReceive');
             const radioDictionary = document.getElementById('radioDictionary');
+            const radioFull = document.getElementById('radioFull');
             const radioChat = document.getElementById('radioChat');
             const modeItems = document.querySelectorAll('.mode-item');
 
@@ -1927,8 +2420,7 @@
             const dictionaryWordArea = document.getElementById('dictionaryWordArea');
             const wordDisplay = document.getElementById('wordDisplay');
 
-            // Chat mode elements
-            const chatContainer = document.getElementById('chatContainer');
+            const chatControls = document.getElementById('chatControls');
             const peerIdDisplay = document.getElementById('peerIdDisplay');
             const copyPeerIdBtn = document.getElementById('copyPeerIdBtn');
             const remotePeerIdInput = document.getElementById('remotePeerIdInput');
@@ -1936,6 +2428,20 @@
             const disconnectPeerBtn = document.getElementById('disconnectPeerBtn');
             const chatReceiveDots = [...document.getElementById('chatReceiveDots').children];
             const chatSendDots = [...document.getElementById('chatSendDots').children];
+            const chatContainer = document.getElementById('chatContainer');
+
+            const menuConnectionSection = document.getElementById('menuConnectionSection');
+            const peerIdDisplayMenu = document.getElementById('peerIdDisplayMenu');
+            const copyPeerIdBtnMenu = document.getElementById('copyPeerIdBtnMenu');
+            const remotePeerIdInputMenu = document.getElementById('remotePeerIdInputMenu');
+            const connectPeerBtnMenu = document.getElementById('connectPeerBtnMenu');
+            const disconnectPeerBtnMenu = document.getElementById('disconnectPeerBtnMenu');
+
+            const chatTouchGrid = document.getElementById('chatTouchGrid');
+            const touchReceiveRow = document.getElementById('touchReceiveRow');
+            const touchSendRow = document.getElementById('touchSendRow');
+            const touchReceiveCells = [...touchReceiveRow.children];
+            const touchSendCells = [...touchSendRow.children];
 
             let peer = null;
             let conn = null;
@@ -1951,6 +2457,8 @@
             let mode = 'send';
             let currentLetter = null;
             let currentCode = null;
+            let currentDirections = '';
+            let currentLang = null;
             let streak = 0;
             let record = 0;
             let state = 'idle';
@@ -1966,30 +2474,21 @@
 
             let isMouseInput = false;
             let mouseInputBits = [0, 0, 0, 0, 0];
+            let mouseDirections = [];
             let lastSendInputMode = isTouchDevice ? true : false;
 
             let touchHandled = false;
 
-            // Dictionary state
             let currentWord = '';
             let currentLetterIndex = 0;
             let wordHistory = [];
 
+            let touchSendBits = [0,0,0,0,0];
+
             function getTargetDots() { return [...targetDotsContainer.children]; }
             function getInputDots() { return [...inputDotsContainer.children]; }
 
-            function updateFingerLabels() {
-                const targetDots = getTargetDots();
-                const inputDots = getInputDots();
-                const labels = ['Бп', 'У', 'С', 'Б', 'М'];
-                for (let i = 0; i < 5; i++) {
-                    targetDots[i].setAttribute('data-finger', i);
-                    targetDots[i].textContent = labels[i];
-                    inputDots[i].setAttribute('data-finger', i);
-                    inputDots[i].textContent = labels[i];
-                }
-            }
-
+            function updateFingerLabels() {}
             function updateInstruction() {
                 const rightKeys = ['SPC', 'J', 'K', 'L', ':'];
                 const leftKeys = ['SPC', 'F', 'D', 'S', 'A'];
@@ -2010,7 +2509,7 @@
             }
 
             function updateHintWarning() {
-                if (hintVisible) {
+                if (hintVisible && mode !== 'chat') {
                     recordBadge.style.display = 'none';
                     hintBadge.style.display = 'flex';
                 } else {
@@ -2024,6 +2523,7 @@
             }
 
             function switchLanguage() {
+                if (mode === 'full') return;
                 language = language === 'ru' ? 'en' : 'ru';
                 setLanguageData(language);
                 updateLangButton();
@@ -2032,7 +2532,7 @@
                 state = 'idle';
                 resetAllDots();
                 setStatus('', '');
-                letterDisplay.classList.remove('correct', 'error', 'timer-active', 'reveal');
+                letterInner.classList.remove('correct', 'error', 'timer-active', 'reveal');
                 receiveLetterDisplay.classList.remove('correct', 'error');
                 mainCard.classList.remove('correct-flash', 'error-flash');
                 receiveLetterDisplay.style.color = 'transparent';
@@ -2228,24 +2728,72 @@
                 }
             }
 
-            function updateMouseDots() {
-                getInputDots().forEach(d => {
-                    const f = parseInt(d.getAttribute('data-finger'), 10);
-                    if (mouseInputBits[f]) d.classList.add('pressed');
-                    else d.classList.remove('pressed');
-                });
+            function updateInputDots() {
+                const dots = getInputDots();
+                const bits = isMouseInput ? mouseInputBits : getCurrentInputCodeBits();
+                for (let i = 0; i < 5; i++) {
+                    if (i < dots.length) {
+                        dots[i].classList.toggle('pressed', bits[i] === 1);
+                    }
+                }
+                if (mode === 'full' && dots.length > 5) {
+                    const dirDots = dots.slice(5);
+                    dirDots.forEach(d => d.classList.remove('direction-pressed'));
+                    const dirs = isMouseInput ? mouseDirections : getCurrentInputDirections();
+                    const shift = getDirectionShift();
+                    const leftDot = dirDots.find(d => d.dataset.dir === '<');
+                    const rightDot = dirDots.find(d => d.dataset.dir === '>');
+                    if (leftDot && rightDot) {
+                        if (dirs.length > 0 && dirs[0] === '>') {
+                            leftDot.style.transform = `translateX(${shift}px)`;
+                            rightDot.style.transform = `translateX(-${shift}px)`;
+                        } else {
+                            leftDot.style.transform = 'translateX(0)';
+                            rightDot.style.transform = 'translateX(0)';
+                        }
+                    }
+                    for (let i = 0; i < dirs.length && i < 2; i++) {
+                        const ch = dirs[i];
+                        const dot = dirDots.find(d => d.dataset.dir === ch);
+                        if (dot) dot.classList.add('direction-pressed');
+                    }
+                }
+            }
+
+            function getDirectionShift() {
+                const dots = getInputDots();
+                const dirDots = dots.slice(5);
+                if (dirDots.length < 2) return 50;
+                const first = dirDots[0];
+                const style = getComputedStyle(first);
+                const width = parseFloat(style.width) || 40;
+                const parent = first.parentElement;
+                const parentStyle = getComputedStyle(parent);
+                const gap = parseFloat(parentStyle.gap) || 10;
+                return width + gap;
+            }
+
+            function getCurrentInputCodeBits() {
+                const bits = [0,0,0,0,0];
+                for (const c of pressedKeys) {
+                    if (keyToBitRight.hasOwnProperty(c)) bits[keyToBitRight[c]] = 1;
+                    if (keyToBitLeft.hasOwnProperty(c)) bits[keyToBitLeft[c]] = 1;
+                }
+                return bits;
+            }
+
+            function getCurrentInputDirections() {
+                return [];
             }
 
             function resetMouseInput() {
-                mouseInputBits = [0, 0, 0, 0, 0];
-                updateMouseDots();
+                mouseInputBits = [0,0,0,0,0];
+                mouseDirections = [];
+                updateInputDots();
             }
 
             function activateMouseInput() {
-                if (mode === 'chat' || (mode !== 'send' && mode !== 'dictionary') || isMouseInput) return;
-                updateFingerLabels();
-                updateInstruction();
-                if (currentCode) updateTargetDots(currentCode);
+                if (mode === 'chat' || (mode !== 'send' && mode !== 'dictionary' && mode !== 'full') || isMouseInput) return;
                 isMouseInput = true;
                 pressedKeys.clear();
                 resetMouseInput();
@@ -2254,7 +2802,7 @@
                 clearAllTimeouts();
                 state = 'idle';
                 setStatus('', '');
-                if (currentCode) updateTargetDots(currentCode);
+                if (currentCode) updateTargetDots(currentCode, currentDirections);
                 lastSendInputMode = true;
             }
 
@@ -2301,844 +2849,62 @@
                         alphabetButtons.style.display = 'flex';
                         buildAlphabetButtons();
                     }
-                }
-            }
-
-            function handleMouseConfirm() {
-                if ((mode !== 'send' && mode !== 'dictionary') || !isMouseInput || state !== 'idle') return;
-                if (!currentLetter || !currentCode) return;
-
-                const sumBits = mouseInputBits.reduce((a, b) => a + b, 0);
-                if (sumBits === 0) {
-                    setStatus('Введите позицию', 'warning');
-                    statusText.classList.remove('animate-warning');
-                    void statusText.offsetWidth;
-                    statusText.classList.add('animate-warning');
-                    setTimeout(() => statusText.classList.remove('animate-warning'), 200);
-                    return;
-                }
-
-                const inputCode = mouseInputBits.join('');
-                const isCorrect = (inputCode === currentCode);
-                clearAllTimeouts();
-                state = 'result';
-
-                mouseConfirmBtn.classList.remove('correct', 'error');
-                if (isCorrect) {
-                    handleCorrectAnswer();
-                } else {
-                    handleWrongAnswer();
-                }
-
-                resultTimeoutId = setTimeout(() => {
-                    mainCard.classList.remove('correct-flash', 'error-flash');
-                    letterDisplay.classList.remove('correct', 'error');
-                    mouseConfirmBtn.classList.remove('correct', 'error');
-                    if (mode === 'dictionary') {
-                        const activeLetter = document.querySelector('.word-letter.active');
-                        if (activeLetter) {
-                            activeLetter.classList.remove('correct', 'error', 'timer-active');
-                        }
-                    }
-                    clearScoreGlow();
-                    setStatus('', '');
-                    if (isCorrect) {
-                        if (mode === 'dictionary') {
-                            advanceLetter();
-                        } else {
-                            showNewLetter();
-                            resetMouseInput();
-                        }
-                    } else {
-                        if (mode === 'dictionary') {
-                            resetWordProgress();
-                        } else {
-                            resetAllDots();
-                            updateTargetDots(currentCode);
-                            resetMouseInput();
-                            state = 'idle';
-                            setStatus('', '');
-                            updateInputDots();
-                        }
-                    }
-                    resultTimeoutId = null;
-                }, RESULT_DISPLAY);
-            }
-
-            function isStreakMilestone(n) {
-                if (n <= 0) return false;
-                if (n <= 100) return n % 10 === 0;
-                return n % 100 === 0;
-            }
-
-            function handleCorrectAnswer() {
-                if (mode !== 'dictionary') {
-                    streak++;
-                    streakValue.textContent = streak;
-                    const milestone = isStreakMilestone(streak);
-                    if (milestone) {
-                        streakBadge.classList.add('correct-streak');
-                        streakValue.classList.add('glow-correct');
-                        playStreak();
-                    } else {
-                        streakBadge.classList.add('flash');
-                        playCorrect();
-                        setTimeout(() => streakBadge.classList.remove('flash'), RESULT_DISPLAY);
-                    }
-                    if (!hintVisible && streak > record) {
-                        record = streak;
-                        recordValue.textContent = record;
-                        saveRecord();
-                        if (milestone) {
-                            recordBadge.classList.add('record-correct');
-                            recordValue.classList.add('glow-correct');
-                        }
-                    }
-                } else {
-                    playCorrect();
-                }
-
-                if (mode === 'send' || mode === 'dictionary') {
-                    if (mode === 'send') letterDisplay.classList.add('correct');
-                    if (mode === 'dictionary') {
-                        const activeLetter = document.querySelector('.word-letter.active');
-                        if (activeLetter) activeLetter.classList.add('correct');
-                    }
-                }
-                if (mode === 'receive') {
-                    receiveLetterDisplay.classList.add('correct');
-                }
-                mainCard.classList.add('correct-flash');
-                if (mode !== 'dictionary' || isMouseInput) {
-                    mouseConfirmBtn.classList.add('correct');
-                }
-                setStatus('✓ Верно!', 'success');
-            }
-
-            function handleWrongAnswer() {
-                streak = 0;
-                streakValue.textContent = '0';
-                streakBadge.classList.add('error-streak');
-                streakValue.classList.add('glow-error');
-                playWrong();
-
-                if (mode === 'send' || mode === 'dictionary') {
-                    if (mode === 'send') letterDisplay.classList.add('error');
-                    if (mode === 'dictionary') {
-                        const activeLetter = document.querySelector('.word-letter.active');
-                        if (activeLetter) {
-                            activeLetter.classList.add('error');
-                        }
-                    }
-                }
-                if (mode === 'receive') {
-                    receiveLetterDisplay.classList.add('error');
-                }
-                mainCard.classList.add('error-flash');
-                if (mode !== 'dictionary' || isMouseInput) {
-                    mouseConfirmBtn.classList.add('error');
-                }
-                setStatus('✗ Неверно. Попробуйте снова.', 'fail');
-            }
-
-            function clearScoreGlow() {
-                streakBadge.classList.remove('correct-streak', 'error-streak', 'flash');
-                streakValue.classList.remove('glow-correct', 'glow-error');
-                recordBadge.classList.remove('record-correct');
-                recordValue.classList.remove('glow-correct');
-                if (mode === 'receive') {
-                    receiveLetterDisplay.classList.remove('correct', 'error');
-                }
-                if (mode === 'dictionary') {
-                    const activeLetter = document.querySelector('.word-letter.active');
-                    if (activeLetter) {
-                        activeLetter.classList.remove('correct', 'error', 'timer-active');
-                    }
-                }
-            }
-
-            function updateSoundButton() {
-                if (soundEnabled) {
-                    menuSoundIcon.textContent = '𝆔';
-                    menuSoundLabel.textContent = 'Звук Выкл.';
-                } else {
-                    menuSoundIcon.textContent = '𝆕';
-                    menuSoundLabel.textContent = 'Звук Вкл.';
-                }
-            }
-
-            function toggleSound() {
-                soundEnabled = !soundEnabled;
-                updateSoundButton();
-                if (soundEnabled) {
-                    playClickSafe();
-                }
-                menuDropdown.classList.remove('open');
-            }
-
-            // ======================== Chat (PeerJS) ========================
-            function initPeer() {
-                if (peer) {
-                    peer.destroy();
-                    peer = null;
-                }
-                const id = Math.random().toString(36).substr(2, 10);
-                peer = new Peer(id);
-                peer.on('open', (peerId) => {
-                    peerIdDisplay.textContent = peerId;
-                });
-                peer.on('connection', (incomingConn) => {
-                    if (conn) {
-                        conn.close();
-                    }
-                    conn = incomingConn;
-                    setupConnection();
-                });
-                peer.on('disconnected', () => {
-                    if (peer) peer.reconnect();
-                });
-                peer.on('error', (err) => {
-                    console.error('PeerJS error:', err);
-                });
-            }
-
-            function setupConnection() {
-                conn.on('open', () => {
-                    connectedToPeer = true;
-                    connectPeerBtn.style.display = 'none';
-                    disconnectPeerBtn.style.display = 'inline-flex';
-                    remotePeerIdInput.disabled = true;
-                    updateChatSendDots();
-                });
-                conn.on('data', (data) => {
-                    if (typeof data === 'string' && data.length === 5) {
-                        updateChatReceiveDots(data);
-                    }
-                });
-                conn.on('close', () => {
-                    onDisconnect();
-                });
-                conn.on('error', (err) => {
-                    console.error('Connection error:', err);
-                    onDisconnect();
-                });
-            }
-
-            function onDisconnect() {
-                connectedToPeer = false;
-                conn = null;
-                connectPeerBtn.style.display = 'inline-flex';
-                disconnectPeerBtn.style.display = 'none';
-                remotePeerIdInput.disabled = false;
-                chatReceiveDots.forEach(d => d.classList.remove('lit'));
-            }
-
-            function connectToPeer() {
-                const remoteId = remotePeerIdInput.value.trim();
-                if (!remoteId || !peer) return;
-                if (conn) conn.close();
-                conn = peer.connect(remoteId);
-                setupConnection();
-            }
-
-            function disconnectPeer() {
-                if (conn) {
-                    conn.close();
-                }
-                onDisconnect();
-            }
-
-            function updateChatReceiveDots(codeStr) {
-                for (let i = 0; i < 5; i++) {
-                    chatReceiveDots[i].classList.toggle('lit', codeStr[i] === '1');
-                }
-            }
-
-            function updateChatSendDots() {
-                const code = getCurrentInputCode();
-                for (let i = 0; i < 5; i++) {
-                    chatSendDots[i].classList.toggle('pressed', code[i] === '1');
-                }
-                if (connectedToPeer && conn && conn.open) {
-                    conn.send(code);
-                }
-            }
-
-            function copyPeerId() {
-                const id = peerIdDisplay.textContent;
-                if (!id) return;
-                navigator.clipboard.writeText(id).then(() => {
-                    copyPeerIdBtn.textContent = '✓';
-                    setTimeout(() => { copyPeerIdBtn.textContent = '📋'; }, 2000);
-                }).catch(() => {
-                    const input = document.createElement('input');
-                    input.value = id;
-                    document.body.appendChild(input);
-                    input.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(input);
-                    copyPeerIdBtn.textContent = '✓';
-                    setTimeout(() => { copyPeerIdBtn.textContent = '📋'; }, 2000);
-                });
-            }
-
-            function closeChatPeer() {
-                if (conn) conn.close();
-                if (peer) {
-                    peer.destroy();
-                    peer = null;
-                }
-                connectedToPeer = false;
-                conn = null;
-            }
-
-            // ======================== Mode switch ========================
-            function setModeUI() {
-                const isChat = mode === 'chat';
-                mainCard.style.display = isChat ? 'none' : '';
-                instructionsWrapper.style.display = isChat ? 'none' : '';
-                mouseConfirmWrapper.style.display = isChat ? 'none' : '';
-                chatContainer.style.display = isChat ? 'block' : 'none';
-
-                streakBadge.style.display = isChat ? 'none' : 'flex';
-                recordBadge.style.display = isChat ? 'none' : 'flex';
-                if (hintVisible && !isChat) {
-                    recordBadge.style.display = 'none';
-                    hintBadge.style.display = 'flex';
-                } else if (!isChat) {
-                    recordBadge.style.display = 'flex';
-                    hintBadge.style.display = 'none';
-                } else {
-                    hintBadge.style.display = 'none';
-                }
-
-                menuHintToggle.style.display = isChat ? 'none' : '';
-                menuLangToggle.style.display = isChat ? 'none' : '';
-
-                radioSend.textContent = mode === 'send' ? '●' : '○';
-                radioReceive.textContent = mode === 'receive' ? '●' : '○';
-                radioDictionary.textContent = mode === 'dictionary' ? '●' : '○';
-                radioChat.textContent = isChat ? '●' : '○';
-                radioSend.className = 'menu-item-radio' + (mode === 'send' ? ' active' : '');
-                radioReceive.className = 'menu-item-radio' + (mode === 'receive' ? ' active' : '');
-                radioDictionary.className = 'menu-item-radio' + (mode === 'dictionary' ? ' active' : '');
-                radioChat.className = 'menu-item-radio' + (isChat ? ' active' : '');
-
-                modeItems.forEach(item => item.classList.remove('active'));
-                const activeModeItem = document.querySelector(`.mode-item[data-mode="${mode}"]`);
-                if (activeModeItem) activeModeItem.classList.add('active');
-
-                if (isChat) {
-                    if (isMouseInput) {
-                        isMouseInput = false;
-                        inputDotsContainer.classList.remove('mouse-active');
-                        resetMouseInput();
-                    }
-                    if (!peer) initPeer();
-                    updateChatSendDots();
-                    return;
-                }
-
-                if (mode === 'dictionary') {
-                    letterDisplay.style.display = 'none';
-                    receiveArea.style.display = 'none';
-                    dictionaryWordArea.style.display = '';
-                    hintWrapper.classList.toggle('hint-hidden', !hintVisible);
-                    mouseConfirmBtn.classList.remove('correct', 'error');
-                    if (isMouseInput) {
-                        updateMouseUI();
-                    } else {
-                        updateKeyboardUI();
-                        if (hintVisible) {
-                            instructionKeyboard.style.display = 'flex';
-                            decodingTableContainer.style.display = 'none';
-                            alphabetButtons.style.display = 'none';
-                        } else {
-                            instructionKeyboard.style.display = 'none';
-                            decodingTableContainer.style.display = 'none';
-                            alphabetButtons.style.display = 'none';
-                        }
-                        instructionsWrapper.classList.toggle('hint-hidden', !hintVisible);
-                    }
-                    mouseConfirmWrapper.style.display = isMouseInput ? 'flex' : 'none';
-                    document.getElementById('hintRow').style.display = '';
-                    document.getElementById('inputRow').style.display = '';
-                    patternsSection.style.display = '';
-                } else {
-                    const isSend = mode === 'send';
-                    mainCard.classList.toggle('send-mode', isSend);
-                    dictionaryWordArea.style.display = 'none';
-                    modeSendArea.style.display = '';
-                    patternsSection.style.display = '';
-                    if (isSend) {
-                        letterDisplay.style.display = '';
-                        receiveArea.style.display = 'none';
-                        hintWrapper.classList.toggle('hint-hidden', !hintVisible);
-                        if (lastSendInputMode) {
-                            activateMouseInput();
-                        } else {
-                            if (isMouseInput) deactivateMouseInput();
-                            else updateKeyboardUI();
-                        }
-                        instructionsWrapper.classList.toggle('hint-hidden', !hintVisible || isMouseInput);
-                        document.getElementById('hintRow').style.display = '';
-                        document.getElementById('inputRow').style.display = '';
-                        letterDisplay.classList.remove('reveal', 'correct', 'error');
-                        if (!currentLetter) showNewLetter();
-                        else {
-                            letterDisplay.textContent = currentLetter;
-                            updateTargetDots(currentCode);
-                        }
-                    } else {
-                        letterDisplay.style.display = 'none';
-                        receiveArea.style.display = 'flex';
-                        instructionsWrapper.style.display = '';
-                        if (hintVisible) {
-                            instructionKeyboard.style.display = 'none';
-                            decodingTableContainer.style.display = 'block';
-                            alphabetButtons.style.display = 'none';
-                            instructionsWrapper.classList.remove('hint-hidden');
-                            buildDecodingTable();
-                        } else {
-                            instructionKeyboard.style.display = 'none';
-                            decodingTableContainer.style.display = 'none';
-                            alphabetButtons.style.display = 'flex';
-                            instructionsWrapper.classList.remove('hint-hidden');
-                            buildAlphabetButtons();
-                        }
-                        document.getElementById('hintRow').style.display = 'none';
-                        document.getElementById('inputRow').style.display = 'none';
-                        receiveLetterDisplay.classList.remove('correct', 'error', 'reveal', 'timer-active');
-                        receiveLetterDisplay.style.color = 'transparent';
-                        receiveLetterDisplay.style.transform = '';
-                        receiveLetterDisplay.style.transition = '';
-                        receiveLetterDisplay.textContent = '\u00A0';
-                        mouseConfirmWrapper.style.display = 'none';
-                        if (!currentLetter) showNewReceive();
-                        else {
-                            for (let i = 0; i < 5; i++) {
-                                receiveDots[i].classList.remove('correct', 'error');
-                                receiveDots[i].classList.toggle('lit', currentCode[i] === '1');
-                            }
-                            receiveLetterDisplay.textContent = '\u00A0';
-                            receiveLetterDisplay.style.color = 'transparent';
-                        }
-                    }
-                }
-                updateHintWarning();
-                updateLangButton();
-                if (statusText.textContent === '' || statusText.classList.contains('info')) {
-                    setStatus('', '');
-                }
-                clearScoreGlow();
-                updateSoundButton();
-            }
-
-            function applyHintVisibility() {
-                if (mode === 'chat') return;
-                hintWrapper.classList.toggle('hint-hidden', !hintVisible);
-                if (mode === 'dictionary') {
-                    if (isMouseInput) {
-                        updateMouseUI();
-                    } else {
-                        updateKeyboardUI();
-                        if (hintVisible) {
-                            instructionKeyboard.style.display = 'flex';
-                        } else {
-                            instructionKeyboard.style.display = 'none';
-                        }
-                        instructionsWrapper.classList.toggle('hint-hidden', !hintVisible);
-                    }
-                    menuHintIcon.textContent = hintVisible ? '☑' : '☐';
-                    updateHintWarning();
-                    clearScoreGlow();
-                    if (currentCode) updateTargetDots(currentCode);
-                    return;
-                }
-                const isReceive = mode === 'receive';
-                const isSend = mode === 'send';
-                if (isReceive) {
-                    instructionsWrapper.classList.remove('hint-hidden');
+                } else if (mode === 'full') {
                     instructionKeyboard.style.display = 'none';
-                    if (hintVisible) {
-                        decodingTableContainer.style.display = 'block';
-                        alphabetButtons.style.display = 'none';
-                        buildDecodingTable();
-                    } else {
-                        decodingTableContainer.style.display = 'none';
-                        alphabetButtons.style.display = 'flex';
-                        buildAlphabetButtons();
-                    }
-                } else if (isSend) {
-                    if (isMouseInput) {
-                        instructionsWrapper.classList.add('hint-hidden');
-                        instructionKeyboard.style.display = 'none';
-                        decodingTableContainer.style.display = 'none';
-                        alphabetButtons.style.display = 'none';
-                        mouseConfirmWrapper.style.display = 'flex';
-                    } else {
-                        if (hintVisible) {
-                            instructionsWrapper.classList.remove('hint-hidden');
-                            instructionKeyboard.style.display = 'flex';
-                            mouseConfirmWrapper.style.display = 'none';
-                        } else {
-                            instructionsWrapper.classList.add('hint-hidden');
-                            instructionKeyboard.style.display = 'none';
-                            mouseConfirmWrapper.style.display = 'none';
-                        }
+                    decodingTableContainer.style.display = 'none';
+                    alphabetButtons.style.display = 'none';
+                    mouseConfirmWrapper.style.display = 'flex';
+                }
+            }
+
+            function updateTargetDots(code, directions) {
+                const dots = getTargetDots();
+                for (let i = 0; i < 5; i++) {
+                    if (i < dots.length) {
+                        dots[i].classList.toggle('active', code[i] === '1');
                     }
                 }
-                menuHintIcon.textContent = hintVisible ? '☑' : '☐';
-                updateHintWarning();
-                clearScoreGlow();
-            }
-
-            function toggleHint() {
-                hintVisible = !hintVisible;
-                if (!hintVisible) {
-                    streak = 0;
-                    streakValue.textContent = '0';
-                    streakBadge.classList.remove('flash', 'correct-streak', 'error-streak');
-                    streakValue.classList.remove('glow-correct', 'glow-error');
-                    recordBadge.classList.remove('record-correct');
-                    recordValue.classList.remove('glow-correct');
-                    setStatus('Подсказки изменены — счёт сброшен', 'warning');
-                    if (statusTimeoutId) clearTimeout(statusTimeoutId);
-                    statusTimeoutId = setTimeout(() => {
-                        if (statusText.textContent === 'Подсказки изменены — счёт сброшен') {
-                            setStatus('', '');
-                        }
-                        statusTimeoutId = null;
-                    }, 5000);
-                } else {
-                    if (statusTimeoutId) {
-                        clearTimeout(statusTimeoutId);
-                        statusTimeoutId = null;
-                    }
-                    setStatus('', '');
-                }
-                playClickSafe();
-                applyHintVisibility();
-                menuDropdown.classList.remove('open');
-                recordValue.textContent = record;
-            }
-
-            function saveRecord() {
-                try { localStorage.setItem(STORAGE_KEY, record.toString()); } catch (e) {}
-            }
-
-            function loadRecord() {
-                try {
-                    const saved = parseInt(localStorage.getItem(STORAGE_KEY), 10);
-                    record = isNaN(saved) ? 0 : saved;
-                } catch (e) { record = 0; }
-                recordValue.textContent = record;
-            }
-
-            function getDictionaryCode(letter) {
-                return letterCodes[letter] || null;
-            }
-
-            function initDictionaryWord() {
-                const words = getDictionaryWords();
-                let available = words.filter(w => !wordHistory.includes(w));
-                if (available.length === 0) {
-                    available = words;
-                    wordHistory = [];
-                }
-                const randomWord = available[Math.floor(Math.random() * available.length)];
-                currentWord = randomWord;
-                wordHistory.push(currentWord);
-                if (wordHistory.length > 10) {
-                    wordHistory.shift();
-                }
-                currentLetterIndex = 0;
-                currentLetter = currentWord[0];
-                currentCode = getDictionaryCode(currentLetter);
-                renderWord();
-                resetAllDots();
-                updateTargetDots(currentCode);
-                if (isMouseInput) {
-                    resetMouseInput();
-                    state = 'idle';
-                } else {
-                    updateInputDots();
-                    state = 'idle';
-                    if (pressedKeys.size > 0) {
-                        if (releaseTimeoutId) clearTimeout(releaseTimeoutId);
-                        releaseTimeoutId = setTimeout(() => {
-                            if (pressedKeys.size > 0 && state === 'idle') {
-                                state = 'waitRelease';
-                                setStatusWarning('Отпустите все клавиши');
+                if (mode === 'full' && dots.length > 5) {
+                    const dirDots = dots.slice(5);
+                    dirDots.forEach(d => d.classList.remove('direction-active'));
+                    if (directions) {
+                        const dirs = directions.split('');
+                        const shift = getDirectionShift();
+                        const leftDot = dirDots.find(d => d.dataset.dir === '<');
+                        const rightDot = dirDots.find(d => d.dataset.dir === '>');
+                        if (leftDot && rightDot) {
+                            if (dirs.length > 0 && dirs[0] === '>') {
+                                leftDot.style.transform = `translateX(${shift}px)`;
+                                rightDot.style.transform = `translateX(-${shift}px)`;
+                            } else {
+                                leftDot.style.transform = 'translateX(0)';
+                                rightDot.style.transform = 'translateX(0)';
                             }
-                            releaseTimeoutId = null;
-                        }, RELEASE_DELAY);
-                    } else {
-                        if (releaseTimeoutId) { clearTimeout(releaseTimeoutId); releaseTimeoutId = null; }
-                        setStatus('', '');
-                    }
-                }
-                if (document.querySelector('.word-letter.active')) {
-                    document.querySelector('.word-letter.active').classList.remove('timer-active');
-                }
-            }
-
-            function renderWord() {
-                wordDisplay.innerHTML = '';
-                for (let i = 0; i < currentWord.length; i++) {
-                    const letterSpan = document.createElement('span');
-                    letterSpan.className = 'word-letter';
-                    letterSpan.textContent = currentWord[i];
-                    if (i === currentLetterIndex) {
-                        letterSpan.classList.add('active');
-                    }
-                    wordDisplay.appendChild(letterSpan);
-                }
-            }
-
-            function advanceLetter() {
-                currentLetterIndex++;
-                if (currentLetterIndex < currentWord.length) {
-                    currentLetter = currentWord[currentLetterIndex];
-                    currentCode = getDictionaryCode(currentLetter);
-                    renderWord();
-                    getTargetDots().forEach(d => d.classList.remove('active'));
-                    updateTargetDots(currentCode);
-                    if (isMouseInput) {
-                        resetMouseInput();
-                        state = 'idle';
-                    } else {
-                        updateInputDots();
-                        state = 'idle';
-                        if (pressedKeys.size > 0) {
-                            if (releaseTimeoutId) clearTimeout(releaseTimeoutId);
-                            releaseTimeoutId = setTimeout(() => {
-                                if (pressedKeys.size > 0 && state === 'idle') {
-                                    state = 'waitRelease';
-                                    setStatusWarning('Отпустите все клавиши');
-                                }
-                                releaseTimeoutId = null;
-                            }, RELEASE_DELAY);
-                        } else {
-                            if (releaseTimeoutId) { clearTimeout(releaseTimeoutId); releaseTimeoutId = null; }
-                            setStatus('', '');
                         }
-                    }
-                    setStatus('', '');
-                    const activeLetter = document.querySelector('.word-letter.active');
-                    if (activeLetter) activeLetter.classList.remove('timer-active');
-                } else {
-                    const wordLength = currentWord.length;
-                    streak += wordLength;
-                    streakValue.textContent = streak;
-                    const milestone = isStreakMilestone(streak);
-                    if (milestone) {
-                        streakBadge.classList.add('correct-streak');
-                        streakValue.classList.add('glow-correct');
-                    } else {
-                        streakBadge.classList.add('flash');
-                        setTimeout(() => streakBadge.classList.remove('flash'), RESULT_DISPLAY);
-                    }
-                    if (!hintVisible && streak > record) {
-                        record = streak;
-                        recordValue.textContent = record;
-                        saveRecord();
-                        if (milestone) {
-                            recordBadge.classList.add('record-correct');
-                            recordValue.classList.add('glow-correct');
-                        }
-                    }
-                    setStatus('Слово завершено!', 'success');
-                    initDictionaryWord();
-                }
-            }
-
-            function resetWordProgress() {
-                currentLetterIndex = 0;
-                currentLetter = currentWord[0];
-                currentCode = getDictionaryCode(currentLetter);
-                renderWord();
-                resetAllDots();
-                updateTargetDots(currentCode);
-                if (isMouseInput) {
-                    resetMouseInput();
-                    state = 'idle';
-                } else {
-                    updateInputDots();
-                    state = 'idle';
-                    if (pressedKeys.size > 0) {
-                        if (releaseTimeoutId) clearTimeout(releaseTimeoutId);
-                        releaseTimeoutId = setTimeout(() => {
-                            if (pressedKeys.size > 0 && state === 'idle') {
-                                state = 'waitRelease';
-                                setStatusWarning('Отпустите все клавиши');
-                            }
-                            releaseTimeoutId = null;
-                        }, RELEASE_DELAY);
-                    } else {
-                        if (releaseTimeoutId) { clearTimeout(releaseTimeoutId); releaseTimeoutId = null; }
-                        setStatus('', '');
-                    }
-                }
-                const activeLetter = document.querySelector('.word-letter.active');
-                if (activeLetter) activeLetter.classList.remove('timer-active');
-            }
-
-            function setStatusWarning(message) {
-                setStatus(message, 'warning');
-                statusText.classList.remove('animate-warning');
-                void statusText.offsetWidth;
-                statusText.classList.add('animate-warning');
-            }
-
-            function switchMode(newMode) {
-                if (newMode === mode) {
-                    menuDropdown.classList.remove('open');
-                    return;
-                }
-                clearAllTimeouts();
-                const wasMouseInput = isMouseInput;
-                if (mode === 'send') {
-                    lastSendInputMode = wasMouseInput;
-                }
-                pressedKeys.clear();
-                receiveKeyIsDown = false;
-                state = 'idle';
-                resetAllDots();
-                setStatus('', '');
-                letterDisplay.classList.remove('correct', 'error', 'timer-active', 'reveal');
-                receiveLetterDisplay.classList.remove('correct', 'error');
-                mainCard.classList.remove('correct-flash', 'error-flash');
-                receiveLetterDisplay.style.color = 'transparent';
-                receiveLetterDisplay.style.transform = '';
-                receiveLetterDisplay.style.transition = '';
-                receiveLetterDisplay.textContent = '\u00A0';
-                if (revealTimeoutId) { clearTimeout(revealTimeoutId); revealTimeoutId = null; }
-
-                if (isMouseInput && newMode !== 'send') {
-                    isMouseInput = false;
-                    updateKeyboardUI();
-                    inputDotsContainer.classList.remove('mouse-active');
-                    resetMouseInput();
-                    pressedKeys.clear();
-                    updateInputDots();
-                }
-
-                mode = newMode;
-                currentLetter = null;
-                currentCode = null;
-
-                if (mode === 'chat') {
-                    initPeer();
-                    setModeUI();
-                    streakValue.textContent = streak;
-                    recordValue.textContent = record;
-                    clearScoreGlow();
-                    menuDropdown.classList.remove('open');
-                    playClickSafe();
-                    return;
-                }
-
-                if (mode === 'dictionary') {
-                    wordHistory = [];
-                    initDictionaryWord();
-                    updateFingerLabels();
-                    updateInstruction();
-                    setModeUI();
-                } else if (mode === 'send') {
-                    updateFingerLabels();
-                    updateInstruction();
-                    showNewLetter();
-                    setModeUI();
-                } else if (mode === 'receive') {
-                    if (hintVisible) buildDecodingTable();
-                    else buildAlphabetButtons();
-                    showNewReceive();
-                    setModeUI();
-                }
-                streakValue.textContent = streak;
-                recordValue.textContent = record;
-                clearScoreGlow();
-                menuDropdown.classList.remove('open');
-                playClickSafe();
-            }
-
-            function showNewLetter() {
-                clearAllTimeouts();
-                if (mode !== 'send') return;
-                currentLetter = getRandomLetter();
-                currentCode = letterCodes[currentLetter];
-                letterDisplay.classList.remove('correct', 'error', 'timer-active');
-                letterDisplay.textContent = currentLetter;
-                letterDisplay.style.color = '';
-                letterDisplay.style.transform = '';
-                mainCard.classList.remove('correct-flash', 'error-flash');
-                mouseConfirmBtn.classList.remove('correct', 'error');
-                setStatus('', '');
-                resetAllDots();
-                updateFingerLabels();
-                updateTargetDots(currentCode);
-                if (!isMouseInput && pressedKeys.size > 0) {
-                    state = 'idle';
-                    releaseTimeoutId = setTimeout(() => {
-                        if (pressedKeys.size > 0 && state === 'idle') {
-                            state = 'waitRelease';
-                            setStatusWarning('Отпустите все клавиши');
-                        }
-                        releaseTimeoutId = null;
-                    }, RELEASE_DELAY);
-                } else state = 'idle';
-                updateInputDots();
-                clearScoreGlow();
-                receiveLetterDisplay.classList.remove('correct', 'error');
-            }
-
-            function getRandomLetter() {
-                const pool = allLetters.filter(l => l !== currentLetter);
-                return pool[Math.floor(Math.random() * pool.length)];
-            }
-
-            function getCurrentInputCode() {
-                const bits = [0, 0, 0, 0, 0];
-                for (const c of pressedKeys) {
-                    if (keyToBitRight.hasOwnProperty(c)) bits[keyToBitRight[c]] = 1;
-                    if (keyToBitLeft.hasOwnProperty(c)) bits[keyToBitLeft[c]] = 1;
-                }
-                return bits.join('');
-            }
-
-            function updateInputDots() {
-                const code = isMouseInput ? mouseInputBits.join('') : getCurrentInputCode();
-                getInputDots().forEach(d => {
-                    const f = parseInt(d.getAttribute('data-finger'), 10);
-                    if (code[f] === '1') {
-                        if (!d.classList.contains('pressed')) {
-                            d.classList.add('pressed');
-                            d.classList.add('animate-press');
-                            d.style.animation = 'none';
-                            d.offsetHeight;
-                            d.style.animation = '';
-                            d.classList.remove('animate-press');
+                        for (let i = 0; i < dirs.length && i < 2; i++) {
+                            const ch = dirs[i];
+                            const dot = dirDots.find(d => d.dataset.dir === ch);
+                            if (dot) dot.classList.add('direction-active');
                         }
                     } else {
-                        d.classList.remove('pressed');
-                        d.classList.remove('animate-press');
-                        d.style.animation = '';
+                        const leftDot = dirDots.find(d => d.dataset.dir === '<');
+                        const rightDot = dirDots.find(d => d.dataset.dir === '>');
+                        if (leftDot && rightDot) {
+                            leftDot.style.transform = 'translateX(0)';
+                            rightDot.style.transform = 'translateX(0)';
+                        }
                     }
-                });
-            }
-
-            function updateTargetDots(code) {
-                getTargetDots().forEach(d => {
-                    const f = parseInt(d.getAttribute('data-finger'), 10);
-                    d.classList.toggle('active', code[f] === '1');
-                });
+                }
             }
 
             function resetAllDots() {
                 [...getTargetDots(), ...getInputDots()].forEach(d => {
-                    d.classList.remove('pressed', 'active', 'animate-press');
+                    d.classList.remove('pressed', 'active', 'direction-active', 'direction-pressed', 'animate-press');
                     d.style.animation = '';
+                    d.style.transform = 'translateX(0)';
+                });
+                document.querySelectorAll('.input-dot.direction-dot, .target-dot.direction-dot').forEach(d => {
+                    d.style.transform = 'translateX(0)';
                 });
             }
 
@@ -3152,10 +2918,30 @@
                 receiveKeyIsDown = false;
             }
 
+            // ==========================================
+            // ИСПРАВЛЕННАЯ ФУНКЦИЯ setStatus (Теперь не удаляет флаг!)
+            // ==========================================
             function setStatus(t, type) {
-                statusText.textContent = t;
+                const flagEl = document.getElementById('langFlagStatus');
+                // Очищаем всё, но оставляем место для флага
+                statusText.innerHTML = '';
+                // Если флаг существует, вставляем его обратно первым
+                if (flagEl) {
+                    statusText.appendChild(flagEl);
+                }
+                // Добавляем текст статуса
+                const textNode = document.createTextNode(t);
+                statusText.appendChild(textNode);
+
                 statusText.className = 'status-text';
                 if (type) statusText.classList.add(type);
+            }
+
+            function setStatusWarning(message) {
+                setStatus(message, 'warning');
+                statusText.classList.remove('animate-warning');
+                void statusText.offsetWidth;
+                statusText.classList.add('animate-warning');
             }
 
             function startTimer() {
@@ -3164,14 +2950,14 @@
                 state = 'counting';
                 clearAllTimeouts();
                 if (mode === 'send') {
-                    letterDisplay.classList.remove('correct', 'error');
-                    letterDisplay.style.color = '';
-                    letterDisplay.style.transform = '';
+                    letterInner.classList.remove('correct', 'error');
+                    letterInner.style.color = '';
+                    letterInner.style.transform = '';
                 }
                 mainCard.classList.remove('correct-flash', 'error-flash');
                 setStatus('Приготовьтесь', 'warning');
                 if (mode === 'send') {
-                    letterDisplay.classList.add('timer-active');
+                    letterInner.classList.add('timer-active');
                 } else if (mode === 'dictionary') {
                     const activeLetter = document.querySelector('.word-letter.active');
                     if (activeLetter) {
@@ -3182,9 +2968,9 @@
             }
 
             function evaluateSend() {
-                const inputCode = getCurrentInputCode();
+                const inputCode = getCurrentInputCodeBits().join('');
                 const isCorrect = (inputCode === currentCode);
-                if (mode === 'send') letterDisplay.classList.remove('timer-active');
+                if (mode === 'send') letterInner.classList.remove('timer-active');
                 if (mode === 'dictionary') {
                     const activeLetter = document.querySelector('.word-letter.active');
                     if (activeLetter) activeLetter.classList.remove('timer-active');
@@ -3201,9 +2987,9 @@
                 resultTimeoutId = setTimeout(() => {
                     mainCard.classList.remove('correct-flash', 'error-flash');
                     if (mode === 'send') {
-                        letterDisplay.classList.remove('correct', 'error', 'timer-active');
-                        letterDisplay.style.color = '';
-                        letterDisplay.style.transform = '';
+                        letterInner.classList.remove('correct', 'error', 'timer-active');
+                        letterInner.style.color = '';
+                        letterInner.style.transform = '';
                     }
                     mouseConfirmBtn.classList.remove('correct', 'error');
                     if (mode === 'dictionary') {
@@ -3225,14 +3011,14 @@
                             resetWordProgress();
                         } else {
                             if (mode === 'send') {
-                                letterDisplay.classList.remove('correct', 'error', 'timer-active');
-                                letterDisplay.style.color = '';
-                                letterDisplay.style.transform = '';
+                                letterInner.classList.remove('correct', 'error', 'timer-active');
+                                letterInner.style.color = '';
+                                letterInner.style.transform = '';
                             }
                             mainCard.classList.remove('correct-flash', 'error-flash');
                             setStatus('', '');
                             resetAllDots();
-                            updateTargetDots(currentCode);
+                            updateTargetDots(currentCode, '');
                             if (pressedKeys.size > 0) {
                                 state = 'idle';
                                 releaseTimeoutId = setTimeout(() => {
@@ -3246,6 +3032,11 @@
                                 state = 'idle';
                             }
                             updateInputDots();
+
+                            // --- ВОССТАНОВЛЕНИЕ ФЛАГА ПОСЛЕ ОШИБКИ В ПОЛНОМ РЕЖИМЕ ---
+                            if (mode === 'full' && currentLang) {
+                                showLangFlag(currentLang);
+                            }
                         }
                     }
                     resultTimeoutId = null;
@@ -3394,8 +3185,281 @@
                 clearScoreGlow();
             }
 
+            function getRandomLetter() {
+                const pool = allLetters.filter(l => l !== currentLetter);
+                return pool[Math.floor(Math.random() * pool.length)];
+            }
+
+            function getDictionaryCode(letter) {
+                return letterCodes[letter] || null;
+            }
+
+            function initDictionaryWord() {
+                const words = getDictionaryWords();
+                let available = words.filter(w => !wordHistory.includes(w));
+                if (available.length === 0) {
+                    available = words;
+                    wordHistory = [];
+                }
+                const randomWord = available[Math.floor(Math.random() * available.length)];
+                currentWord = randomWord;
+                wordHistory.push(currentWord);
+                if (wordHistory.length > 10) {
+                    wordHistory.shift();
+                }
+                currentLetterIndex = 0;
+                currentLetter = currentWord[0];
+                currentCode = getDictionaryCode(currentLetter);
+                renderWord();
+                resetAllDots();
+                updateTargetDots(currentCode, '');
+                if (isMouseInput) {
+                    resetMouseInput();
+                    state = 'idle';
+                } else {
+                    updateInputDots();
+                    state = 'idle';
+                    if (pressedKeys.size > 0) {
+                        if (releaseTimeoutId) clearTimeout(releaseTimeoutId);
+                        releaseTimeoutId = setTimeout(() => {
+                            if (pressedKeys.size > 0 && state === 'idle') {
+                                state = 'waitRelease';
+                                setStatusWarning('Отпустите все клавиши');
+                            }
+                            releaseTimeoutId = null;
+                        }, RELEASE_DELAY);
+                    } else {
+                        if (releaseTimeoutId) { clearTimeout(releaseTimeoutId); releaseTimeoutId = null; }
+                        setStatus('', '');
+                    }
+                }
+                if (document.querySelector('.word-letter.active')) {
+                    document.querySelector('.word-letter.active').classList.remove('timer-active');
+                }
+            }
+
+            function renderWord() {
+                wordDisplay.innerHTML = '';
+                for (let i = 0; i < currentWord.length; i++) {
+                    const letterSpan = document.createElement('span');
+                    letterSpan.className = 'word-letter';
+                    letterSpan.textContent = currentWord[i];
+                    if (i === currentLetterIndex) {
+                        letterSpan.classList.add('active');
+                    }
+                    wordDisplay.appendChild(letterSpan);
+                }
+            }
+
+            // ======================== LOGIC FOR LANGUAGE FLAG ========================
+            function showLangFlag(lang) {
+                if (mode !== 'full' || !lang) {
+                    hideLangFlag();
+                    return;
+                }
+                langFlagStatus.textContent = lang === 'ru' ? '🇷🇺' : '🇬🇧';
+                langFlagStatus.style.display = 'block';
+            }
+
+            function hideLangFlag() {
+                langFlagStatus.style.display = 'none';
+            }
+
+            // ======================== DICTIONARY LOGIC ========================
+            function advanceLetter() {
+                currentLetterIndex++;
+                if (currentLetterIndex < currentWord.length) {
+                    currentLetter = currentWord[currentLetterIndex];
+                    currentCode = getDictionaryCode(currentLetter);
+                    renderWord();
+                    resetAllDots();
+                    updateTargetDots(currentCode, '');
+                    if (isMouseInput) {
+                        resetMouseInput();
+                        state = 'idle';
+                    } else {
+                        updateInputDots();
+                        state = 'idle';
+                        if (pressedKeys.size > 0) {
+                            if (releaseTimeoutId) clearTimeout(releaseTimeoutId);
+                            releaseTimeoutId = setTimeout(() => {
+                                if (pressedKeys.size > 0 && state === 'idle') {
+                                    state = 'waitRelease';
+                                    setStatusWarning('Отпустите все клавиши');
+                                }
+                                releaseTimeoutId = null;
+                            }, RELEASE_DELAY);
+                        } else {
+                            if (releaseTimeoutId) { clearTimeout(releaseTimeoutId); releaseTimeoutId = null; }
+                            setStatus('', '');
+                        }
+                    }
+                    setStatus('', '');
+                    const activeLetter = document.querySelector('.word-letter.active');
+                    if (activeLetter) activeLetter.classList.remove('timer-active');
+                } else {
+                    const wordLength = currentWord.length;
+                    const oldStreak = streak;
+                    streak += wordLength;
+                    streakValue.textContent = streak;
+
+                    let crossedMilestone = false;
+                    const next10 = Math.ceil((oldStreak + 1) / 10) * 10;
+                    if (next10 <= streak) crossedMilestone = true;
+                    if (streak >= 100) {
+                        const next100 = Math.ceil((oldStreak + 1) / 100) * 100;
+                        if (next100 <= streak) crossedMilestone = true;
+                    }
+
+                    if (crossedMilestone) {
+                        streakBadge.classList.add('correct-streak');
+                        streakValue.classList.add('glow-correct');
+                        playStreak();
+                    } else {
+                        streakBadge.classList.add('flash');
+                        setTimeout(() => streakBadge.classList.remove('flash'), RESULT_DISPLAY);
+                    }
+
+                    if (!hintVisible && streak > record) {
+                        record = streak;
+                        recordValue.textContent = record;
+                        saveRecord();
+                        if (crossedMilestone) {
+                            recordBadge.classList.add('record-correct');
+                            recordValue.classList.add('glow-correct');
+                        }
+                    }
+                    setStatus('Слово завершено!', 'success');
+                    initDictionaryWord();
+                }
+            }
+
+            function resetWordProgress() {
+                currentLetterIndex = 0;
+                currentLetter = currentWord[0];
+                currentCode = getDictionaryCode(currentLetter);
+                renderWord();
+                resetAllDots();
+                updateTargetDots(currentCode, '');
+                if (isMouseInput) {
+                    resetMouseInput();
+                    state = 'idle';
+                } else {
+                    updateInputDots();
+                    state = 'idle';
+                    if (pressedKeys.size > 0) {
+                        if (releaseTimeoutId) clearTimeout(releaseTimeoutId);
+                        releaseTimeoutId = setTimeout(() => {
+                            if (pressedKeys.size > 0 && state === 'idle') {
+                                state = 'waitRelease';
+                                setStatusWarning('Отпустите все клавиши');
+                            }
+                            releaseTimeoutId = null;
+                        }, RELEASE_DELAY);
+                    } else {
+                        if (releaseTimeoutId) { clearTimeout(releaseTimeoutId); releaseTimeoutId = null; }
+                        setStatus('', '');
+                    }
+                }
+                const activeLetter = document.querySelector('.word-letter.active');
+                if (activeLetter) activeLetter.classList.remove('timer-active');
+            }
+
+            function showNewSymbol() {
+                clearAllTimeouts();
+                if (mode === 'send') {
+                    currentLetter = getRandomLetter();
+                    currentCode = letterCodes[currentLetter];
+                    currentDirections = '';
+                    currentLang = null;
+                    letterInner.classList.remove('correct', 'error', 'timer-active');
+                    letterInner.textContent = currentLetter;
+                    letterInner.style.color = '';
+                    letterInner.style.transform = '';
+                    const flagSpan = letterDisplay.querySelector('.lang-flag');
+                    if (flagSpan) flagSpan.remove();
+                    mainCard.classList.remove('correct-flash', 'error-flash');
+                    mouseConfirmBtn.classList.remove('correct', 'error');
+                    setStatus('', '');
+                    resetAllDots();
+                    updateTargetDots(currentCode, '');
+                    if (!isMouseInput && pressedKeys.size > 0) {
+                        state = 'idle';
+                        releaseTimeoutId = setTimeout(() => {
+                            if (pressedKeys.size > 0 && state === 'idle') {
+                                state = 'waitRelease';
+                                setStatusWarning('Отпустите все клавиши');
+                            }
+                            releaseTimeoutId = null;
+                        }, RELEASE_DELAY);
+                    } else state = 'idle';
+                    updateInputDots();
+                    clearScoreGlow();
+                    receiveLetterDisplay.classList.remove('correct', 'error');
+                    return;
+                }
+
+                if (mode === 'full') {
+                    const available = fullSymbols.filter(s => s.symbol !== currentLetter || s.lang !== currentLang);
+                    let sym;
+                    if (available.length === 0) {
+                        const idx = Math.floor(Math.random() * fullSymbols.length);
+                        sym = fullSymbols[idx];
+                    } else {
+                        const idx = Math.floor(Math.random() * available.length);
+                        sym = available[idx];
+                    }
+                    currentLetter = sym.symbol;
+                    currentCode = sym.code;
+                    currentDirections = sym.directions || '';
+                    currentLang = sym.lang || null;
+                    letterInner.classList.remove('correct', 'error', 'timer-active');
+                    letterInner.textContent = currentLetter;
+                    letterInner.style.color = '';
+                    letterInner.style.transform = '';
+                    const oldFlag = letterDisplay.querySelector('.lang-flag');
+                    if (oldFlag) oldFlag.remove();
+                    // Показываем флаг статуса под буквой (без анимации и без влияния на высоту)
+                    if (currentLang) {
+                        showLangFlag(currentLang);
+                    } else {
+                        hideLangFlag();
+                    }
+                    mainCard.classList.remove('correct-flash', 'error-flash');
+                    mouseConfirmBtn.classList.remove('correct', 'error');
+                    setStatus('', '');
+                    resetAllDots();
+                    updateTargetDots(currentCode, currentDirections);
+                    if (!isMouseInput && pressedKeys.size > 0) {
+                        state = 'idle';
+                        releaseTimeoutId = setTimeout(() => {
+                            if (pressedKeys.size > 0 && state === 'idle') {
+                                state = 'waitRelease';
+                                setStatusWarning('Отпустите все клавиши');
+                            }
+                            releaseTimeoutId = null;
+                        }, RELEASE_DELAY);
+                    } else state = 'idle';
+                    updateInputDots();
+                    clearScoreGlow();
+                    receiveLetterDisplay.classList.remove('correct', 'error');
+                    return;
+                }
+            }
+
+            function showNewLetter() {
+                if (mode === 'send') {
+                    showNewSymbol();
+                }
+            }
+
             function handleKeyDown(e) {
+                if (mode === 'full') {
+                    e.preventDefault();
+                    return;
+                }
                 if (mode === 'chat') {
+                    if (isTouchDevice && chatTouchGrid.style.display !== 'none') return;
                     if (!allRelevantCodes.has(e.code)) return;
                     e.preventDefault();
                     if (e.repeat) return;
@@ -3461,7 +3525,12 @@
             }
 
             function handleKeyUp(e) {
+                if (mode === 'full') {
+                    e.preventDefault();
+                    return;
+                }
                 if (mode === 'chat') {
+                    if (isTouchDevice && chatTouchGrid.style.display !== 'none') return;
                     if (!allRelevantCodes.has(e.code)) return;
                     e.preventDefault();
                     pressedKeys.delete(e.code);
@@ -3510,9 +3579,9 @@
                 if (state === 'counting' && pressedKeys.size === 0) {
                     clearTimeout(evaluationTimeoutId);
                     evaluationTimeoutId = null;
-                    letterDisplay.classList.remove('timer-active');
-                    letterDisplay.style.color = '';
-                    letterDisplay.style.transform = '';
+                    letterInner.classList.remove('timer-active');
+                    letterInner.style.color = '';
+                    letterInner.style.transform = '';
                     setStatus('', '');
                     state = 'idle';
                 }
@@ -3528,6 +3597,7 @@
             }
 
             function handleBlur() {
+                if (mode === 'full') return;
                 if (pressedKeys.size > 0) {
                     pressedKeys.clear();
                     updateInputDots();
@@ -3538,9 +3608,9 @@
                 if (revealTimeoutId) { clearTimeout(revealTimeoutId); revealTimeoutId = null; }
                 if (state === 'counting' || state === 'reveal') {
                     state = 'idle';
-                    letterDisplay.classList.remove('timer-active');
-                    letterDisplay.style.color = '';
-                    letterDisplay.style.transform = '';
+                    letterInner.classList.remove('timer-active');
+                    letterInner.style.color = '';
+                    letterInner.style.transform = '';
                     receiveLetterDisplay.textContent = '\u00A0';
                     receiveLetterDisplay.classList.remove('reveal', 'timer-active');
                     receiveLetterDisplay.style.color = 'transparent';
@@ -3560,59 +3630,69 @@
                 }
             }
 
-            // ======================== Event listeners ========================
+            function handleMouseConfirm() {
+                if ((mode !== 'send' && mode !== 'dictionary' && mode !== 'full') || !isMouseInput || state !== 'idle') return;
+                if (!currentLetter || !currentCode) return;
 
-            menuBtn.addEventListener('click', e => {
-                e.stopPropagation();
-                menuDropdown.classList.toggle('open');
-                playClickSafe();
-            });
-
-            modeItems.forEach(item => {
-                item.addEventListener('click', function(e) {
-                    const newMode = this.dataset.mode;
-                    if (newMode) switchMode(newMode);
-                    playClickSafe();
-                });
-            });
-
-            menuHintToggle.addEventListener('click', toggleHint);
-            menuInfo.addEventListener('click', () => {
-                window.open(
-                    'https://drive.google.com/drive/folders/1ifBkgXc-yeQVHzGPw9zmMTHdrrNAgOrH?usp=sharing',
-                    '_blank');
-                menuDropdown.classList.remove('open');
-                playClickSafe();
-            });
-
-            menuSoundToggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                toggleSound();
-            });
-
-            menuLangToggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                switchLanguage();
-                menuDropdown.classList.remove('open');
-            });
-
-            document.addEventListener('click', e => {
-                if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
-                    menuDropdown.classList.remove('open');
+                const sumBits = mouseInputBits.reduce((a, b) => a + b, 0);
+                if (sumBits === 0 && mouseDirections.length === 0) {
+                    setStatus('Введите символ', 'warning');
+                    statusText.classList.remove('animate-warning');
+                    void statusText.offsetWidth;
+                    statusText.classList.add('animate-warning');
+                    setTimeout(() => statusText.classList.remove('animate-warning'), 200);
+                    return;
                 }
-            });
 
-            document.addEventListener('mousedown', function(e) {
-                if (e.button !== 0) return;
-                if (mode === 'chat') return;
-                if (mode !== 'send' && mode !== 'dictionary') return;
-                if (isMouseInput) return;
-                if (e.target.closest('.header-right')) return;
-                if (e.target.closest('.menu-dropdown')) return;
-                activateMouseInput();
-            });
+                const inputCode = mouseInputBits.join('');
+                const inputDirs = mouseDirections.join('');
+                const isCorrect = (inputCode === currentCode) && (inputDirs === currentDirections);
+                clearAllTimeouts();
+                state = 'result';
 
-            inputDotsContainer.addEventListener('click', function(e) {
+                mouseConfirmBtn.classList.remove('correct', 'error');
+                if (isCorrect) {
+                    handleCorrectAnswer();
+                } else {
+                    handleWrongAnswer();
+                }
+
+                resultTimeoutId = setTimeout(() => {
+                    mainCard.classList.remove('correct-flash', 'error-flash');
+                    letterInner.classList.remove('correct', 'error');
+                    mouseConfirmBtn.classList.remove('correct', 'error');
+                    if (mode === 'dictionary') {
+                        const activeLetter = document.querySelector('.word-letter.active');
+                        if (activeLetter) {
+                            activeLetter.classList.remove('correct', 'error', 'timer-active');
+                        }
+                    }
+                    clearScoreGlow();
+                    setStatus('', '');
+                    if (isCorrect) {
+                        if (mode === 'dictionary') {
+                            advanceLetter();
+                        } else {
+                            showNewSymbol();
+                            resetMouseInput();
+                        }
+                    } else {
+                        if (mode === 'dictionary') {
+                            resetWordProgress();
+                        } else {
+                            resetAllDots();
+                            updateTargetDots(currentCode, currentDirections);
+                            resetMouseInput();
+                            state = 'idle';
+                            setStatus('', '');
+                            updateInputDots();
+                        }
+                    }
+                    resultTimeoutId = null;
+                }, RESULT_DISPLAY);
+            }
+
+            function handleInputDotClick(e) {
                 if (!isMouseInput) return;
                 if (touchHandled) {
                     touchHandled = false;
@@ -3622,86 +3702,850 @@
                 if (!dot) return;
                 e.preventDefault();
                 e.stopPropagation();
-                const finger = parseInt(dot.getAttribute('data-finger'), 10);
-                mouseInputBits[finger] = mouseInputBits[finger] ? 0 : 1;
-                updateMouseDots();
-                if (statusText.textContent === 'Введите позицию') {
-                    setStatus('', '');
-                }
-                playClickSafe();
-            });
 
-            if (isTouchDevice) {
-                inputDotsContainer.addEventListener('touchstart', function(e) {
-                    if (!isMouseInput) return;
-                    const dot = e.target.closest('.input-dot');
-                    if (!dot) return;
-                    e.preventDefault();
-                    e.stopPropagation();
-                    const finger = parseInt(dot.getAttribute('data-finger'), 10);
+                const finger = parseInt(dot.dataset.finger, 10);
+                if (!isNaN(finger) && finger >= 0 && finger < 5) {
                     mouseInputBits[finger] = mouseInputBits[finger] ? 0 : 1;
-                    updateMouseDots();
-                    if (statusText.textContent === 'Введите позицию') {
+                    updateInputDots();
+                    if (statusText.textContent === 'Введите позицию' || statusText.textContent === 'Введите символ') {
                         setStatus('', '');
                     }
                     playClickSafe();
-                    touchHandled = true;
-                    setTimeout(() => { touchHandled = false; }, 0);
-                }, { passive: false });
+                    return;
+                }
+
+                const dir = dot.dataset.dir;
+                if (dir && mode === 'full') {
+                    const idx = mouseDirections.indexOf(dir);
+                    if (idx !== -1) {
+                        mouseDirections.splice(idx, 1);
+                    } else {
+                        if (mouseDirections.length < 2) {
+                            mouseDirections.push(dir);
+                        }
+                    }
+                    updateInputDots();
+                    if (statusText.textContent === 'Введите символ') {
+                        setStatus('', '');
+                    }
+                    playClickSafe();
+                }
             }
 
-            mouseConfirmBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                handleMouseConfirm();
-            });
+            // ======================== TOUCH CHAT HANDLERS ========================
+            function setupTouchChat() {
+                const handlePointerDown = (bit) => {
+                    touchSendBits[bit] = 1;
+                    updateTouchSendDisplay();
+                    sendTouchCode();
+                };
+                const handlePointerUp = (bit) => {
+                    touchSendBits[bit] = 0;
+                    updateTouchSendDisplay();
+                    sendTouchCode();
+                };
 
-            mouseResetBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (!isMouseInput) return;
-                resetMouseInput();
-                if (state === 'result') {
-                    clearAllTimeouts();
-                    state = 'idle';
-                    setStatus('', '');
-                    letterDisplay.classList.remove('correct', 'error');
-                    mainCard.classList.remove('correct-flash', 'error-flash');
-                    mouseConfirmBtn.classList.remove('correct', 'error');
-                    resetAllDots();
-                    updateTargetDots(currentCode);
-                    updateInputDots();
-                    clearScoreGlow();
+                // Настройка для нижнего ряда (отправка)
+                touchSendCells.forEach(cell => {
+                    const bit = parseInt(cell.dataset.bit, 10);
+                    cell.addEventListener('pointerdown', (e) => {
+                        e.preventDefault();
+                        cell.setPointerCapture(e.pointerId);
+                        handlePointerDown(bit);
+                    });
+                    cell.addEventListener('pointerup', (e) => {
+                        e.preventDefault();
+                        handlePointerUp(bit);
+                    });
+                    cell.addEventListener('pointerleave', (e) => {
+                        if (cell.hasPointerCapture(e.pointerId)) {
+                            handlePointerUp(bit);
+                        }
+                    });
+                    cell.addEventListener('pointercancel', (e) => {
+                        handlePointerUp(bit);
+                    });
+                });
+
+                // Настройка для верхнего ряда (приём) - теперь работает как отправка, подсветка на нижнем ряду
+                touchReceiveCells.forEach(cell => {
+                    const bit = parseInt(cell.dataset.bit, 10);
+                    cell.addEventListener('pointerdown', (e) => {
+                        e.preventDefault();
+                        cell.setPointerCapture(e.pointerId);
+                        handlePointerDown(bit);
+                    });
+                    cell.addEventListener('pointerup', (e) => {
+                        e.preventDefault();
+                        handlePointerUp(bit);
+                    });
+                    cell.addEventListener('pointerleave', (e) => {
+                        if (cell.hasPointerCapture(e.pointerId)) {
+                            handlePointerUp(bit);
+                        }
+                    });
+                    cell.addEventListener('pointercancel', (e) => {
+                        handlePointerUp(bit);
+                    });
+                });
+            }
+
+            function updateTouchSendDisplay() {
+                touchSendCells.forEach(cell => {
+                    const bit = parseInt(cell.dataset.bit, 10);
+                    cell.classList.toggle('pressed', touchSendBits[bit] === 1);
+                });
+            }
+
+            function sendTouchCode() {
+                const code = touchSendBits.join('');
+                if (connectedToPeer && conn && conn.open) {
+                    conn.send(code);
                 }
-                if (statusText.textContent === 'Введите позицию') {
+            }
+
+            function updateTouchReceiveDisplay(codeStr) {
+                touchReceiveCells.forEach(cell => {
+                    const bit = parseInt(cell.dataset.bit, 10);
+                    cell.classList.toggle('lit', codeStr[bit] === '1');
+                });
+            }
+
+            // ======================== ORIENTATION LOCK ========================
+            function lockLandscape() {
+                if (!isTouchDevice) return;
+                try {
+                    if (screen.orientation && screen.orientation.lock) {
+                        screen.orientation.lock('landscape-primary').catch(() => {});
+                    }
+                } catch (e) {}
+            }
+
+            function unlockLandscape() {
+                if (!isTouchDevice) return;
+                try {
+                    if (screen.orientation && screen.orientation.unlock) {
+                        screen.orientation.unlock();
+                    }
+                } catch (e) {}
+            }
+
+            // ======================== MODE SWITCH ========================
+            function switchMode(newMode) {
+                if (newMode === mode) {
+                    menuDropdown.classList.remove('open');
+                    return;
+                }
+                if (mode === 'chat') unlockLandscape(); // разблокировать, если уходим из чата
+
+                clearAllTimeouts();
+                const wasMouseInput = isMouseInput;
+                if (mode === 'send' || mode === 'full') {
+                    lastSendInputMode = wasMouseInput;
+                }
+                pressedKeys.clear();
+                receiveKeyIsDown = false;
+                state = 'idle';
+                resetAllDots();
+                setStatus('', '');
+                letterInner.classList.remove('correct', 'error', 'timer-active', 'reveal');
+                receiveLetterDisplay.classList.remove('correct', 'error');
+                mainCard.classList.remove('correct-flash', 'error-flash');
+                receiveLetterDisplay.style.color = 'transparent';
+                receiveLetterDisplay.style.transform = '';
+                receiveLetterDisplay.style.transition = '';
+                receiveLetterDisplay.textContent = '\u00A0';
+                if (revealTimeoutId) { clearTimeout(revealTimeoutId); revealTimeoutId = null; }
+
+                touchSendBits = [0,0,0,0,0];
+                updateTouchSendDisplay();
+                chatTouchGrid.style.display = 'none';
+                chatContainer.style.display = 'none';
+
+                if (newMode === 'full') {
+                    menuLangToggle.style.display = 'none';
+                    if (!isMouseInput) {
+                        isMouseInput = true;
+                        inputDotsContainer.classList.add('mouse-active');
+                    }
+                    document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'flex');
+                    document.getElementById('hintRow').classList.add('full-mode');
+                    document.getElementById('inputRow').classList.add('full-mode');
+                    updateMouseUI();
+                    if (hintVisible) {
+                        hintWrapper.classList.remove('hint-hidden');
+                    } else {
+                        hintWrapper.classList.add('hint-hidden');
+                    }
+                    mode = newMode;
+                    streakBadge.style.display = 'flex';
+                    recordBadge.style.display = 'flex';
+                    chatControls.style.display = 'none';
+                    showNewSymbol();
+                    setModeUI();
+                    menuDropdown.classList.remove('open');
+                    return;
+                } else if (newMode === 'chat') {
+                    menuLangToggle.style.display = '';
+                    document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'none');
+                    document.getElementById('hintRow').classList.remove('full-mode');
+                    document.getElementById('inputRow').classList.remove('full-mode');
+                    streakBadge.style.display = 'none';
+                    recordBadge.style.display = 'none';
+                    chatControls.style.display = 'none';
+                    mode = newMode;
+                    initPeer();
+                    setModeUI();
+                    menuDropdown.classList.remove('open');
+                    playClickSafe();
+                    lockLandscape(); // принудительная горизонтальная ориентация
+                    return;
+                } else {
+                    menuLangToggle.style.display = '';
+                    document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'none');
+                    document.getElementById('hintRow').classList.remove('full-mode');
+                    document.getElementById('inputRow').classList.remove('full-mode');
+                    streakBadge.style.display = 'flex';
+                    recordBadge.style.display = 'flex';
+                    chatControls.style.display = 'none';
+                }
+
+                mode = newMode;
+                currentLetter = null;
+                currentCode = null;
+                currentDirections = '';
+                currentLang = null;
+
+                if (mode === 'dictionary') {
+                    wordHistory = [];
+                    initDictionaryWord();
+                    updateFingerLabels();
+                    updateInstruction();
+                    setModeUI();
+                } else if (mode === 'send') {
+                    updateFingerLabels();
+                    updateInstruction();
+                    showNewLetter();
+                    setModeUI();
+                } else if (mode === 'receive') {
+                    if (hintVisible) buildDecodingTable();
+                    else buildAlphabetButtons();
+                    showNewReceive();
+                    setModeUI();
+                } else {
+                    setModeUI();
+                }
+                streakValue.textContent = streak;
+                recordValue.textContent = record;
+                clearScoreGlow();
+                menuDropdown.classList.remove('open');
+                playClickSafe();
+            }
+
+            function setModeUI() {
+                const isChat = mode === 'chat';
+                const isFull = mode === 'full';
+                mainCard.style.display = isChat ? 'none' : '';
+                instructionsWrapper.style.display = (isChat || isFull) ? 'none' : '';
+                mouseConfirmWrapper.style.display = (isChat || isFull) ? 'none' : '';
+                if (isFull || mode === 'send' || mode === 'dictionary') {
+                    if (isMouseInput) mouseConfirmWrapper.style.display = 'flex';
+                }
+
+                if (isChat && isTouchDevice) {
+                    chatContainer.style.display = 'none';
+                    chatTouchGrid.style.display = 'flex';
+                } else if (isChat) {
+                    chatContainer.style.display = 'block';
+                    chatTouchGrid.style.display = 'none';
+                } else {
+                    chatContainer.style.display = 'none';
+                    chatTouchGrid.style.display = 'none';
+                }
+
+                if (isChat) {
+                    streakBadge.style.display = 'none';
+                    recordBadge.style.display = 'none';
+                } else {
+                    streakBadge.style.display = 'flex';
+                    recordBadge.style.display = 'flex';
+                }
+                if (hintVisible && !isChat) {
+                    recordBadge.style.display = 'none';
+                    hintBadge.style.display = 'flex';
+                } else if (!isChat) {
+                    recordBadge.style.display = 'flex';
+                    hintBadge.style.display = 'none';
+                } else {
+                    hintBadge.style.display = 'none';
+                }
+
+                menuHintToggle.style.display = (isChat) ? 'none' : '';
+                menuLangToggle.style.display = (isChat || isFull) ? 'none' : '';
+
+                radioSend.textContent = mode === 'send' ? '●' : '○';
+                radioReceive.textContent = mode === 'receive' ? '●' : '○';
+                radioDictionary.textContent = mode === 'dictionary' ? '●' : '○';
+                radioFull.textContent = isFull ? '●' : '○';
+                radioChat.textContent = isChat ? '●' : '○';
+                radioSend.className = 'menu-item-radio' + (mode === 'send' ? ' active' : '');
+                radioReceive.className = 'menu-item-radio' + (mode === 'receive' ? ' active' : '');
+                radioDictionary.className = 'menu-item-radio' + (mode === 'dictionary' ? ' active' : '');
+                radioFull.className = 'menu-item-radio' + (isFull ? ' active' : '');
+                radioChat.className = 'menu-item-radio' + (isChat ? ' active' : '');
+
+                modeItems.forEach(item => item.classList.remove('active'));
+                const activeModeItem = document.querySelector(`.mode-item[data-mode="${mode}"]`);
+                if (activeModeItem) activeModeItem.classList.add('active');
+
+                if (isChat) {
+                    menuBtn.style.display = 'none';
+                    menuBtnAlt.style.display = 'inline-flex';
+                    menuConnectionSection.style.display = '';
+                    updateConnectionUI();
+                } else {
+                    menuBtn.style.display = '';
+                    menuBtnAlt.style.display = 'none';
+                    menuConnectionSection.style.display = 'none';
+                }
+
+                // ==========================================
+                // ПЕРЕМЕЩЕНИЕ МЕНЮ (логика для чата, чтобы выпадало под кнопкой)
+                // ==========================================
+                const menuDropdown = document.getElementById('menuDropdown');
+                const titleArea = document.querySelector('.title-area');
+                const headerRight = document.querySelector('.header-right');
+                const infoBtn = document.getElementById('menuInfo');
+                const infoSection = infoBtn.parentElement;
+
+                if (isChat) {
+                    // Перемещаем меню в заголовок, чтобы оно было под кнопкой menuBtnAlt
+                    if (menuDropdown.parentElement !== titleArea) {
+                        titleArea.appendChild(menuDropdown);
+                    }
+                    // Вставляем разделитель перед кнопкой "Информация"
+                    let existingDivider = infoSection.previousElementSibling;
+                    if (!existingDivider || existingDivider.className !== 'menu-divider') {
+                        const divider = document.createElement('div');
+                        divider.className = 'menu-divider';
+                        infoSection.parentElement.insertBefore(divider, infoSection);
+                    }
+                } else {
+                    // Возвращаем меню обратно в правый блок
+                    if (menuDropdown.parentElement !== headerRight) {
+                        headerRight.appendChild(menuDropdown);
+                    }
+                    // Удаляем разделитель, если он есть
+                    const possibleDivider = infoSection.previousElementSibling;
+                    if (possibleDivider && possibleDivider.className === 'menu-divider') {
+                        possibleDivider.remove();
+                    }
+                }
+                // ==========================================
+
+                if (isChat) {
+                    if (isMouseInput) {
+                        isMouseInput = false;
+                        inputDotsContainer.classList.remove('mouse-active');
+                        resetMouseInput();
+                    }
+                    if (!isTouchDevice) {
+                        updateChatSendDots();
+                    } else {
+                        updateTouchSendDisplay();
+                    }
+                    return;
+                }
+
+                // ==========================================
+                // ЛОГИКА ФЛАГА: Скрываем его во всех режимах, кроме Full
+                // ==========================================
+                if (!isFull) {
+                    hideLangFlag();
+                }
+
+                if (isFull) {
+                    letterDisplay.style.display = '';
+                    receiveArea.style.display = 'none';
+                    dictionaryWordArea.style.display = 'none';
+                    hintWrapper.classList.toggle('hint-hidden', !hintVisible);
+                    if (!isMouseInput) {
+                        isMouseInput = true;
+                        inputDotsContainer.classList.add('mouse-active');
+                    }
+                    updateMouseUI();
+                    instructionsWrapper.classList.add('hint-hidden');
+                    document.getElementById('hintRow').style.display = '';
+                    document.getElementById('inputRow').style.display = '';
+                    letterInner.classList.remove('reveal', 'correct', 'error');
+                    if (!currentLetter) showNewSymbol();
+                    else {
+                        letterInner.textContent = currentLetter;
+                        const oldFlag = letterDisplay.querySelector('.lang-flag');
+                        if (oldFlag) oldFlag.remove();
+                        if (currentLang) {
+                            showLangFlag(currentLang);
+                        } else {
+                            hideLangFlag();
+                        }
+                        updateTargetDots(currentCode, currentDirections);
+                    }
+                    resetMouseInput();
+                    return;
+                }
+
+                if (mode === 'dictionary') {
+                    letterDisplay.style.display = 'none';
+                    receiveArea.style.display = 'none';
+                    dictionaryWordArea.style.display = '';
+                    hintWrapper.classList.toggle('hint-hidden', !hintVisible);
+                    mouseConfirmBtn.classList.remove('correct', 'error');
+                    if (isMouseInput) {
+                        updateMouseUI();
+                    } else {
+                        updateKeyboardUI();
+                        if (hintVisible) {
+                            instructionKeyboard.style.display = 'flex';
+                            decodingTableContainer.style.display = 'none';
+                            alphabetButtons.style.display = 'none';
+                        } else {
+                            instructionKeyboard.style.display = 'none';
+                            decodingTableContainer.style.display = 'none';
+                            alphabetButtons.style.display = 'none';
+                        }
+                        instructionsWrapper.classList.toggle('hint-hidden', !hintVisible);
+                    }
+                    mouseConfirmWrapper.style.display = isMouseInput ? 'flex' : 'none';
+                    document.getElementById('hintRow').style.display = '';
+                    document.getElementById('inputRow').style.display = '';
+                    patternsSection.style.display = '';
+                } else {
+                    const isSend = mode === 'send';
+                    mainCard.classList.toggle('send-mode', isSend);
+                    dictionaryWordArea.style.display = 'none';
+                    modeSendArea.style.display = '';
+                    patternsSection.style.display = '';
+                    if (isSend) {
+                        letterDisplay.style.display = '';
+                        receiveArea.style.display = 'none';
+                        hintWrapper.classList.toggle('hint-hidden', !hintVisible);
+                        if (lastSendInputMode) {
+                            activateMouseInput();
+                        } else {
+                            if (isMouseInput) deactivateMouseInput();
+                            else updateKeyboardUI();
+                        }
+                        instructionsWrapper.classList.toggle('hint-hidden', !hintVisible || isMouseInput);
+                        document.getElementById('hintRow').style.display = '';
+                        document.getElementById('inputRow').style.display = '';
+                        letterInner.classList.remove('reveal', 'correct', 'error');
+                        if (!currentLetter) showNewLetter();
+                        else {
+                            letterInner.textContent = currentLetter;
+                            const flag = letterDisplay.querySelector('.lang-flag');
+                            if (flag) flag.remove();
+                            updateTargetDots(currentCode, '');
+                        }
+                    } else {
+                        letterDisplay.style.display = 'none';
+                        receiveArea.style.display = 'flex';
+                        instructionsWrapper.style.display = '';
+                        if (hintVisible) {
+                            instructionKeyboard.style.display = 'none';
+                            decodingTableContainer.style.display = 'block';
+                            alphabetButtons.style.display = 'none';
+                            instructionsWrapper.classList.remove('hint-hidden');
+                            buildDecodingTable();
+                        } else {
+                            instructionKeyboard.style.display = 'none';
+                            decodingTableContainer.style.display = 'none';
+                            alphabetButtons.style.display = 'flex';
+                            instructionsWrapper.classList.remove('hint-hidden');
+                            buildAlphabetButtons();
+                        }
+                        document.getElementById('hintRow').style.display = 'none';
+                        document.getElementById('inputRow').style.display = 'none';
+                        receiveLetterDisplay.classList.remove('correct', 'error', 'reveal', 'timer-active');
+                        receiveLetterDisplay.style.color = 'transparent';
+                        receiveLetterDisplay.style.transform = '';
+                        receiveLetterDisplay.style.transition = '';
+                        receiveLetterDisplay.textContent = '\u00A0';
+                        mouseConfirmWrapper.style.display = 'none';
+                        if (!currentLetter) showNewReceive();
+                        else {
+                            for (let i = 0; i < 5; i++) {
+                                receiveDots[i].classList.remove('correct', 'error');
+                                receiveDots[i].classList.toggle('lit', currentCode[i] === '1');
+                            }
+                            receiveLetterDisplay.textContent = '\u00A0';
+                            receiveLetterDisplay.style.color = 'transparent';
+                        }
+                    }
+                }
+                updateHintWarning();
+                updateLangButton();
+                if (statusText.textContent === '' || statusText.classList.contains('info')) {
+                    setStatus('', '');
+                }
+                clearScoreGlow();
+                updateSoundButton();
+            }
+
+            // ======================== CHAT ========================
+            function initPeer() {
+                if (peer) {
+                    peer.destroy();
+                    peer = null;
+                }
+                const id = Math.random().toString(36).substr(2, 8);
+                peer = new Peer(id);
+                peer.on('open', (peerId) => {
+                    peerIdDisplay.textContent = peerId;
+                    if (peerIdDisplayMenu) peerIdDisplayMenu.textContent = peerId;
+                    updateConnectionUI();
+                });
+                peer.on('connection', (incomingConn) => {
+                    if (conn) {
+                        conn.close();
+                    }
+                    conn = incomingConn;
+                    setupConnection();
+                });
+                peer.on('disconnected', () => {
+                    if (peer) peer.reconnect();
+                });
+                peer.on('error', (err) => {
+                    console.error('PeerJS error:', err);
+                });
+            }
+
+            function setupConnection() {
+                conn.on('open', () => {
+                    connectedToPeer = true;
+                    updateConnectionUI();
+                });
+                conn.on('data', (data) => {
+                    if (typeof data === 'string' && data.length === 5) {
+                        updateChatReceiveDots(data);
+                        if (isTouchDevice) updateTouchReceiveDisplay(data);
+                    }
+                });
+                conn.on('close', () => {
+                    onDisconnect();
+                });
+                conn.on('error', (err) => {
+                    console.error('Connection error:', err);
+                    onDisconnect();
+                });
+            }
+
+            function onDisconnect() {
+                connectedToPeer = false;
+                conn = null;
+                updateConnectionUI();
+                chatReceiveDots.forEach(d => d.classList.remove('lit'));
+                touchReceiveCells.forEach(d => d.classList.remove('lit'));
+            }
+
+            function connectToPeer() {
+                const remoteId = remotePeerIdInput.value.trim() || remotePeerIdInputMenu.value.trim();
+                if (!remoteId || !peer) return;
+                if (conn) conn.close();
+                conn = peer.connect(remoteId);
+                setupConnection();
+            }
+
+            function disconnectPeer() {
+                if (conn) {
+                    conn.close();
+                }
+                onDisconnect();
+            }
+
+            function updateConnectionUI() {
+                const isConnected = connectedToPeer && conn && conn.open;
+                connectPeerBtn.style.display = isConnected ? 'none' : 'inline-flex';
+                disconnectPeerBtn.style.display = isConnected ? 'inline-flex' : 'none';
+                remotePeerIdInput.disabled = isConnected;
+
+                if (connectPeerBtnMenu) {
+                    connectPeerBtnMenu.style.display = isConnected ? 'none' : 'inline-flex';
+                    disconnectPeerBtnMenu.style.display = isConnected ? 'inline-flex' : 'none';
+                    if (remotePeerIdInputMenu) remotePeerIdInputMenu.disabled = isConnected;
+                }
+            }
+
+            function updateChatReceiveDots(codeStr) {
+                for (let i = 0; i < 5; i++) {
+                    chatReceiveDots[i].classList.toggle('lit', codeStr[i] === '1');
+                }
+            }
+
+            function updateChatSendDots() {
+                const code = getCurrentInputCodeBits().join('');
+                for (let i = 0; i < 5; i++) {
+                    chatSendDots[i].classList.toggle('pressed', code[i] === '1');
+                }
+                if (connectedToPeer && conn && conn.open) {
+                    conn.send(code);
+                }
+            }
+
+            function copyPeerId() {
+                const id = peerIdDisplay.textContent;
+                if (!id) return;
+                navigator.clipboard.writeText(id).then(() => {
+                    copyPeerIdBtn.textContent = '✓';
+                    if (copyPeerIdBtnMenu) copyPeerIdBtnMenu.textContent = '✓';
+                    setTimeout(() => {
+                        copyPeerIdBtn.textContent = '📋';
+                        if (copyPeerIdBtnMenu) copyPeerIdBtnMenu.textContent = '📋';
+                    }, 2000);
+                }).catch(() => {
+                    const input = document.createElement('input');
+                    input.value = id;
+                    document.body.appendChild(input);
+                    input.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(input);
+                    copyPeerIdBtn.textContent = '✓';
+                    if (copyPeerIdBtnMenu) copyPeerIdBtnMenu.textContent = '✓';
+                    setTimeout(() => {
+                        copyPeerIdBtn.textContent = '📋';
+                        if (copyPeerIdBtnMenu) copyPeerIdBtnMenu.textContent = '📋';
+                    }, 2000);
+                });
+            }
+
+            function isStreakMilestone(n) {
+                if (n <= 0) return false;
+                if (n <= 100) return n % 10 === 0;
+                return n % 100 === 0;
+            }
+
+            function handleCorrectAnswer() {
+                // Скрываем флаг статуса при начале результата
+                if (mode === 'full') hideLangFlag();
+
+                if (mode !== 'dictionary') {
+                    streak++;
+                    streakValue.textContent = streak;
+                    const milestone = isStreakMilestone(streak);
+                    if (milestone) {
+                        streakBadge.classList.add('correct-streak');
+                        streakValue.classList.add('glow-correct');
+                        playStreak();
+                    } else {
+                        streakBadge.classList.add('flash');
+                        playCorrect();
+                        setTimeout(() => streakBadge.classList.remove('flash'), RESULT_DISPLAY);
+                    }
+                    if (!hintVisible && streak > record) {
+                        record = streak;
+                        recordValue.textContent = record;
+                        saveRecord();
+                        if (milestone) {
+                            recordBadge.classList.add('record-correct');
+                            recordValue.classList.add('glow-correct');
+                        }
+                    }
+                } else {
+                    playCorrect();
+                }
+
+                if (mode === 'send' || mode === 'full') {
+                    letterInner.classList.add('correct');
+                }
+                if (mode === 'dictionary') {
+                    const activeLetter = document.querySelector('.word-letter.active');
+                    if (activeLetter) activeLetter.classList.add('correct');
+                }
+                if (mode === 'receive') {
+                    receiveLetterDisplay.classList.add('correct');
+                }
+                mainCard.classList.add('correct-flash');
+                if (mode !== 'dictionary' || isMouseInput) {
+                    mouseConfirmBtn.classList.add('correct');
+                }
+                setStatus('✓ Верно!', 'success');
+            }
+
+            function handleWrongAnswer() {
+                // Скрываем флаг статуса при начале результата
+                if (mode === 'full') hideLangFlag();
+
+                streak = 0;
+                streakValue.textContent = '0';
+                streakBadge.classList.add('error-streak');
+                streakValue.classList.add('glow-error');
+                playWrong();
+
+                if (mode === 'send' || mode === 'full') {
+                    letterInner.classList.add('error');
+                }
+                if (mode === 'dictionary') {
+                    const activeLetter = document.querySelector('.word-letter.active');
+                    if (activeLetter) {
+                        activeLetter.classList.add('error');
+                    }
+                }
+                if (mode === 'receive') {
+                    receiveLetterDisplay.classList.add('error');
+                }
+                mainCard.classList.add('error-flash');
+                if (mode !== 'dictionary' || isMouseInput) {
+                    mouseConfirmBtn.classList.add('error');
+                }
+                setStatus('✗ Неверно. Попробуйте снова.', 'fail');
+            }
+
+            function clearScoreGlow() {
+                streakBadge.classList.remove('correct-streak', 'error-streak', 'flash');
+                streakValue.classList.remove('glow-correct', 'glow-error');
+                recordBadge.classList.remove('record-correct');
+                recordValue.classList.remove('glow-correct');
+                if (mode === 'receive') {
+                    receiveLetterDisplay.classList.remove('correct', 'error');
+                }
+                if (mode === 'dictionary') {
+                    const activeLetter = document.querySelector('.word-letter.active');
+                    if (activeLetter) {
+                        activeLetter.classList.remove('correct', 'error', 'timer-active');
+                    }
+                }
+                if (mode === 'send' || mode === 'full') {
+                    letterInner.classList.remove('correct', 'error');
+                }
+            }
+
+            function saveRecord() {
+                try { localStorage.setItem(STORAGE_KEY, record.toString()); } catch (e) {}
+            }
+
+            function loadRecord() {
+                try {
+                    const saved = parseInt(localStorage.getItem(STORAGE_KEY), 10);
+                    record = isNaN(saved) ? 0 : saved;
+                } catch (e) { record = 0; }
+                recordValue.textContent = record;
+            }
+
+            function toggleHint() {
+                hintVisible = !hintVisible;
+                if (!hintVisible) {
+                    streak = 0;
+                    streakValue.textContent = '0';
+                    streakBadge.classList.remove('flash', 'correct-streak', 'error-streak');
+                    streakValue.classList.remove('glow-correct', 'glow-error');
+                    recordBadge.classList.remove('record-correct');
+                    recordValue.classList.remove('glow-correct');
+                    setStatus('Подсказки изменены — счёт сброшен', 'warning');
+                    if (statusTimeoutId) clearTimeout(statusTimeoutId);
+                    statusTimeoutId = setTimeout(() => {
+                        if (statusText.textContent === 'Подсказки изменены — счёт сброшен') {
+                            setStatus('', '');
+                        }
+                        statusTimeoutId = null;
+                    }, 5000);
+                } else {
+                    if (statusTimeoutId) {
+                        clearTimeout(statusTimeoutId);
+                        statusTimeoutId = null;
+                    }
                     setStatus('', '');
                 }
                 playClickSafe();
-            });
-
-            decodingTableWrap.addEventListener('click', function(e) {
-                const td = e.target.closest('td[data-letter]');
-                if (!td) return;
-                if (e.target.closest('.sort-btn')) return;
-                const letter = td.dataset.letter;
-                if (!letter || letter === ' ') return;
-                if (mode === 'receive' && state === 'idle' && !receiveKeyIsDown) {
-                    handleMouseReceive(letter);
+                const isFull = mode === 'full';
+                if (isFull) {
+                    hintWrapper.classList.toggle('hint-hidden', !hintVisible);
+                } else {
+                    applyHintVisibility();
                 }
-            });
+                menuHintIcon.textContent = hintVisible ? '☑' : '☐';
+                updateHintWarning();
+                menuDropdown.classList.remove('open');
+                recordValue.textContent = record;
+            }
 
-            // Chat button listeners
-            copyPeerIdBtn.addEventListener('click', copyPeerId);
-            connectPeerBtn.addEventListener('click', connectToPeer);
-            disconnectPeerBtn.addEventListener('click', disconnectPeer);
-            remotePeerIdInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') connectToPeer();
-            });
+            function applyHintVisibility() {
+                if (mode === 'chat' || mode === 'full') return;
+                hintWrapper.classList.toggle('hint-hidden', !hintVisible);
+                if (mode === 'dictionary') {
+                    if (isMouseInput) {
+                        updateMouseUI();
+                    } else {
+                        updateKeyboardUI();
+                        if (hintVisible) {
+                            instructionKeyboard.style.display = 'flex';
+                        } else {
+                            instructionKeyboard.style.display = 'none';
+                        }
+                        instructionsWrapper.classList.toggle('hint-hidden', !hintVisible);
+                    }
+                    menuHintIcon.textContent = hintVisible ? '☑' : '☐';
+                    updateHintWarning();
+                    clearScoreGlow();
+                    if (currentCode) updateTargetDots(currentCode, '');
+                    return;
+                }
+                const isReceive = mode === 'receive';
+                const isSend = mode === 'send';
+                if (isReceive) {
+                    instructionsWrapper.classList.remove('hint-hidden');
+                    instructionKeyboard.style.display = 'none';
+                    if (hintVisible) {
+                        decodingTableContainer.style.display = 'block';
+                        alphabetButtons.style.display = 'none';
+                        buildDecodingTable();
+                    } else {
+                        decodingTableContainer.style.display = 'none';
+                        alphabetButtons.style.display = 'flex';
+                        buildAlphabetButtons();
+                    }
+                } else if (isSend) {
+                    if (isMouseInput) {
+                        instructionsWrapper.classList.add('hint-hidden');
+                        instructionKeyboard.style.display = 'none';
+                        decodingTableContainer.style.display = 'none';
+                        alphabetButtons.style.display = 'none';
+                        mouseConfirmWrapper.style.display = 'flex';
+                    } else {
+                        if (hintVisible) {
+                            instructionsWrapper.classList.remove('hint-hidden');
+                            instructionKeyboard.style.display = 'flex';
+                            mouseConfirmWrapper.style.display = 'none';
+                        } else {
+                            instructionsWrapper.classList.add('hint-hidden');
+                            instructionKeyboard.style.display = 'none';
+                            mouseConfirmWrapper.style.display = 'none';
+                        }
+                    }
+                }
+                menuHintIcon.textContent = hintVisible ? '☑' : '☐';
+                updateHintWarning();
+                clearScoreGlow();
+            }
 
-            window.addEventListener('beforeunload', () => {
-                if (peer) peer.destroy();
-            });
+            function toggleSound() {
+                soundEnabled = !soundEnabled;
+                updateSoundButton();
+                if (soundEnabled) {
+                    playClickSafe();
+                }
+                menuDropdown.classList.remove('open');
+            }
 
-            // ======================== Initialization ========================
+            function updateSoundButton() {
+                if (soundEnabled) {
+                    menuSoundIcon.textContent = '𝆔';
+                    menuSoundLabel.textContent = 'Звук Выкл.';
+                } else {
+                    menuSoundIcon.textContent = '𝆕';
+                    menuSoundLabel.textContent = 'Звук Вкл.';
+                }
+            }
 
+            // ======================== INIT ========================
             function init() {
                 loadRecord();
                 document.addEventListener('keydown', handleKeyDown);
@@ -3721,7 +4565,131 @@
                 buildAlphabetButtons();
                 updateSoundButton();
                 updateLangButton();
+
+                inputDotsContainer.addEventListener('click', handleInputDotClick);
+                if (isTouchDevice) {
+                    inputDotsContainer.addEventListener('touchstart', function(e) {
+                        if (!isMouseInput) return;
+                        const dot = e.target.closest('.input-dot');
+                        if (!dot) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleInputDotClick.call(inputDotsContainer, e);
+                        touchHandled = true;
+                        setTimeout(() => { touchHandled = false; }, 0);
+                    }, { passive: false });
+                }
+
+                mouseConfirmBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    handleMouseConfirm();
+                });
+
+                mouseResetBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (!isMouseInput) return;
+                    resetMouseInput();
+                    if (state === 'result') {
+                        clearAllTimeouts();
+                        state = 'idle';
+                        setStatus('', '');
+                        letterInner.classList.remove('correct', 'error');
+                        mainCard.classList.remove('correct-flash', 'error-flash');
+                        mouseConfirmBtn.classList.remove('correct', 'error');
+                        resetAllDots();
+                        updateTargetDots(currentCode, currentDirections);
+                        updateInputDots();
+                        clearScoreGlow();
+                    }
+                    if (statusText.textContent === 'Введите позицию' || statusText.textContent === 'Введите символ') {
+                        setStatus('', '');
+                    }
+                    playClickSafe();
+                });
+
+                menuBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    menuDropdown.classList.toggle('open');
+                    playClickSafe();
+                });
+                menuBtnAlt.addEventListener('click', e => {
+                    e.stopPropagation();
+                    menuDropdown.classList.toggle('open');
+                    playClickSafe();
+                });
+
+                modeItems.forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        const newMode = this.dataset.mode;
+                        if (newMode) switchMode(newMode);
+                        playClickSafe();
+                    });
+                });
+
+                menuHintToggle.addEventListener('click', toggleHint);
+                menuInfo.addEventListener('click', () => {
+                    window.open(
+                        'https://drive.google.com/drive/folders/1ifBkgXc-yeQVHzGPw9zmMTHdrrNAgOrH?usp=sharing',
+                        '_blank');
+                    menuDropdown.classList.remove('open');
+                    playClickSafe();
+                });
+
+                menuSoundToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleSound();
+                });
+
+                menuLangToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    switchLanguage();
+                    menuDropdown.classList.remove('open');
+                });
+
+                document.addEventListener('click', e => {
+                    if (!menuBtn.contains(e.target) && !menuBtnAlt.contains(e.target) && !menuDropdown.contains(e.target)) {
+                        menuDropdown.classList.remove('open');
+                    }
+                });
+
+                decodingTableWrap.addEventListener('click', function(e) {
+                    const td = e.target.closest('td[data-letter]');
+                    if (!td) return;
+                    if (e.target.closest('.sort-btn')) return;
+                    const letter = td.dataset.letter;
+                    if (!letter || letter === ' ') return;
+                    if (mode === 'receive' && state === 'idle' && !receiveKeyIsDown) {
+                        handleMouseReceive(letter);
+                    }
+                });
+
+                copyPeerIdBtn.addEventListener('click', copyPeerId);
+                connectPeerBtn.addEventListener('click', connectToPeer);
+                disconnectPeerBtn.addEventListener('click', disconnectPeer);
+                remotePeerIdInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') connectToPeer();
+                });
+
+                copyPeerIdBtnMenu.addEventListener('click', copyPeerId);
+                connectPeerBtnMenu.addEventListener('click', connectToPeer);
+                disconnectPeerBtnMenu.addEventListener('click', disconnectPeer);
+                remotePeerIdInputMenu.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') connectToPeer();
+                });
+                remotePeerIdInput.addEventListener('input', function() {
+                    remotePeerIdInputMenu.value = remotePeerIdInput.value;
+                });
+                remotePeerIdInputMenu.addEventListener('input', function() {
+                    remotePeerIdInput.value = remotePeerIdInputMenu.value;
+                });
+
+                setupTouchChat();
+
+                window.addEventListener('beforeunload', () => {
+                    if (peer) peer.destroy();
+                });
             }
+
             init();
         })();
     </script>
