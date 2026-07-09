@@ -153,6 +153,15 @@
             transition: color 0s;
         }
 
+        /* ======== ИСПРАВЛЕНИЕ: ЦЕНТРИРОВАНИЕ ЭМОДЗИ В БЕЙДЖАХ ======== */
+        .badge-icon {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
         .chat-controls {
             display: none;
             align-items: center;
@@ -406,17 +415,11 @@
             animation: glowErrorValue var(--result-duration) ease forwards;
         }
 
-        .badge-icon {
-            font-size: 1.5rem;
-        }
         .hint-badge {
             width: fit-content;
             max-width: 100%;
             flex-shrink: 1;
             min-width: 0;
-        }
-        .hint-badge .badge-icon {
-            font-size: 1.5rem;
         }
         .hint-badge .badge-value {
             font-size: 0.85rem;
@@ -1304,6 +1307,10 @@
             padding: 0;
             aspect-ratio: 1 / 1;
             font-size: 1.6rem;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .word-display {
@@ -1650,16 +1657,16 @@
             .sort-btn {
                 font-size: 1rem;
             }
+            
+            /* ВОЗВРАЩАЕМ ПРЕЖНИЕ РАЗМЕРЫ КНОПОК, ОСТАВЛЯЯ ЦЕНТРИРОВАНИЕ */
             .confirm-btn {
                 font-size: 1.2rem;
                 padding: 8px 20px;
             }
-            .confirm-buttons-row {
-                max-width: 260px;
-            }
             .confirm-btn-reset {
                 width: 40px;
             }
+            
             .alphabet-btn {
                 flex: 0 0 calc((100% - 7 * 6px) / 8);
                 max-width: 40px;
@@ -1811,7 +1818,16 @@
             .touch-chat-cell {
                 font-size: 0.9rem;
             }
+
+            /* ВОЗВРАЩАЕМ ПРЕЖНИЕ РАЗМЕРЫ КНОПОК (только центрирование) */
+            .confirm-btn-reset {
+                width: 40px;
+            }
         }
+.chat-layout .menu-dropdown {
+    max-height: 61.8dvh;
+    overflow-y: auto;
+}
     </style>
 </head>
 <body>
