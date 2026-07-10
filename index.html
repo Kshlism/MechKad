@@ -1966,7 +1966,7 @@
                         <div class="pattern-row" id="hintRow">
                             <span class="pattern-label">ПОЗИЦИЯ</span>
                             <div class="finger-dots" id="targetDots">
-                                <div class="finger-dot target-dot" data-finger="0">Бп</div>
+                                <div class="finger-dot target-dot" data-finger="0">П</div>
                                 <div class="finger-dot target-dot" data-finger="1">У</div>
                                 <div class="finger-dot target-dot" data-finger="2">С</div>
                                 <div class="finger-dot target-dot" data-finger="3">Б</div>
@@ -1980,7 +1980,7 @@
                     <div class="pattern-row" id="inputRow">
                         <span class="pattern-label" id="positionLabel">НАЖАТО</span>
                         <div class="finger-dots" id="inputDots">
-                            <div class="finger-dot input-dot" data-finger="0">Бп</div>
+                            <div class="finger-dot input-dot" data-finger="0">П</div>
                             <div class="finger-dot input-dot" data-finger="1">У</div>
                             <div class="finger-dot input-dot" data-finger="2">С</div>
                             <div class="finger-dot input-dot" data-finger="3">Б</div>
@@ -2056,14 +2056,14 @@
 
             <div id="chatTouchGrid" style="display:none;">
                 <div class="touch-chat-row receive-row" id="touchReceiveRow">
-                    <div class="touch-chat-cell receive-cell" data-bit="0">Бп</div>
+                    <div class="touch-chat-cell receive-cell" data-bit="0">П</div>
                     <div class="touch-chat-cell receive-cell" data-bit="1">У</div>
                     <div class="touch-chat-cell receive-cell" data-bit="2">С</div>
                     <div class="touch-chat-cell receive-cell" data-bit="3">Б</div>
                     <div class="touch-chat-cell receive-cell" data-bit="4">М</div>
                 </div>
                 <div class="touch-chat-row send-row" id="touchSendRow">
-                    <div class="touch-chat-cell send-cell" data-bit="0">Бп</div>
+                    <div class="touch-chat-cell send-cell" data-bit="0">П</div>
                     <div class="touch-chat-cell send-cell" data-bit="1">У</div>
                     <div class="touch-chat-cell send-cell" data-bit="2">С</div>
                     <div class="touch-chat-cell send-cell" data-bit="3">Б</div>
@@ -2354,7 +2354,7 @@
             }
             const allowedEnglishKeys = { ...codeToEnglishMap };
 
-            const fingerNames = ['Бп', 'У', 'С', 'Б', 'М'];
+            const fingerNames = ['П', 'У', 'С', 'Б', 'М'];
 
             const keyToBitRight = { 'Space': 0, 'KeyJ': 1, 'KeyK': 2, 'KeyL': 3, 'Semicolon': 4 };
             const keyToBitLeft = { 'Space': 0, 'KeyF': 1, 'KeyD': 2, 'KeyS': 3, 'KeyA': 4 };
@@ -2671,10 +2671,10 @@
                 }
 
                 function getCodesForLetters(letters) {
-                    const codes = { 'Бп': [], 'У': [], 'С': [], 'Б': [], 'М': [] };
+                    const codes = { 'П': [], 'У': [], 'С': [], 'Б': [], 'М': [] };
                     for (let letter of letters) {
                         if (letter === ' ') {
-                            codes['Бп'].push(0);
+                            codes['П'].push(0);
                             codes['У'].push(0);
                             codes['С'].push(0);
                             codes['Б'].push(0);
@@ -2683,7 +2683,7 @@
                         }
                         const code = letterCodes[letter];
                         if (!code) {
-                            codes['Бп'].push(0);
+                            codes['П'].push(0);
                             codes['У'].push(0);
                             codes['С'].push(0);
                             codes['Б'].push(0);
@@ -2691,7 +2691,7 @@
                             continue;
                         }
                         const bits = code.split('').map(Number);
-                        codes['Бп'].push(bits[0]);
+                        codes['П'].push(bits[0]);
                         codes['У'].push(bits[1]);
                         codes['С'].push(bits[2]);
                         codes['Б'].push(bits[3]);
