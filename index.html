@@ -2435,7 +2435,9 @@
                     { symbol: 'Ъ', code: '01100', directions: '<>', lang: 'ru' }
                 ];
                 for (const p of punct) {
-                    symbols.push({ symbol: p.symbol, code: p.code, directions: p.directions || '', lang: null });
+                    symbols.push({ symbol: p.symbol, code: p.code, directions: p.directions || '', 
+               lang: p.lang || null});
+                    
                 }
 
                 return symbols;
