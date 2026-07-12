@@ -2320,7 +2320,7 @@
                     defaultTop = defaultTopRu;
                     defaultBottom = defaultBottomRu;
                 }
-            }
+                            }
             setLanguageData(language);
 
             // ======================== MAPS ========================
@@ -2533,6 +2533,7 @@
             const RESULT_DISPLAY = 600;
             const RELEASE_DELAY = 5000;
             const STORAGE_KEY = 'azbukaRecord';
+            const STORAGE_KEY_STREAK = 'azbukaStreak'; // НОВЫЙ КЛЮЧ ДЛЯ СЧЁТА
 
             let mode = 'send';
             let currentLetter = null;
@@ -3258,6 +3259,7 @@
                     const oldStreak = streak;
                     streak += wordLength;
                     streakValue.textContent = streak;
+                    saveStreak(); // СОХРАНЯЕМ СЧЁТ
 
                     let crossedMilestone = false;
                     const next10 = Math.ceil((oldStreak + 1) / 10) * 10;
@@ -3895,6 +3897,7 @@
                     showNewSymbol();
                     setModeUI();
                     menuDropdown.classList.remove('open');
+                    saveState(); // добавили сохранение
                     return;
                 } else if (newMode === 'chat') {
                     menuLangToggle.style.display = '';
@@ -3909,6 +3912,7 @@
                     setModeUI();
                     menuDropdown.classList.remove('open');
                     playClickSafe();
+                    saveState(); // добавили сохранение
                     return;
                 } else {
                     // Выходим из full или из другого режима
@@ -3956,6 +3960,7 @@
                 clearScoreGlow();
                 menuDropdown.classList.remove('open');
                 playClickSafe();
+                saveState(); // добавили сохранение
             }
 
             function setModeUI() {
@@ -4342,6 +4347,7 @@
                 if (mode !== 'dictionary') {
                     streak++;
                     streakValue.textContent = streak;
+                    saveStreak(); // СОХРАНЯЕМ СЧЁТ
                     const milestone = isStreakMilestone(streak);
                     if (milestone) {
                         streakBadge.classList.add('correct-streak');
@@ -4385,6 +4391,7 @@
             function handleWrongAnswer() {
                 streak = 0;
                 streakValue.textContent = '0';
+                saveStreak(); // СОХРАНЯЕМ СЧЁТ (обнуление)
                 streakBadge.classList.add('error-streak');
                 streakValue.classList.add('glow-error');
                 playWrong();
@@ -4439,11 +4446,38 @@
                 recordValue.textContent = record;
             }
 
+            // НОВЫЕ ФУНКЦИИ ДЛЯ СОХРАНЕНИЯ СЧЁТА
+            function saveStreak() {
+                try {
+                    localStorage.setItem(STORAGE_KEY_STREAK, streak.toString());
+                } catch (e) {}
+            }
+
+            function loadStreak() {
+                try {
+                    const saved = parseInt(localStorage.getItem(STORAGE_KEY_STREAK), 10);
+                    streak = isNaN(saved) ? 0 : saved;
+                } catch (e) {
+                    streak = 0;
+                }
+                streakValue.textContent = streak;
+            }
+
+            // ========== СОХРАНЕНИЕ СОСТОЯНИЯ (РЕЖИМ, ЯЗЫК, ПОДСКАЗКИ) ==========
+            function saveState() {
+                try {
+                    localStorage.setItem('azbuka_mode', mode);
+                    localStorage.setItem('azbuka_language', language);
+                    localStorage.setItem('azbuka_hint', hintVisible ? '1' : '0');
+                } catch (e) {}
+            }
+
             function toggleHint() {
                 hintVisible = !hintVisible;
                 if (!hintVisible) {
                     streak = 0;
                     streakValue.textContent = '0';
+                    saveStreak(); // СОХРАНЯЕМ СЧЁТ (обнуление)
                     streakBadge.classList.remove('flash', 'correct-streak', 'error-streak');
                     streakValue.classList.remove('glow-correct', 'glow-error');
                     recordBadge.classList.remove('record-correct');
@@ -4474,6 +4508,7 @@
                 updateHintWarning();
                 menuDropdown.classList.remove('open');
                 recordValue.textContent = record;
+                saveState(); // добавили сохранение
             }
 
             function applyHintVisibility() {
@@ -4733,6 +4768,7 @@
                 if (mode === 'full') return;
                 language = language === 'ru' ? 'en' : 'ru';
                 setLanguageData(language);
+                fullSymbols = buildFullSymbols();
                 updateLangButton();
                 clearAllTimeouts();
                 receiveKeyIsDown = false;
@@ -4765,6 +4801,7 @@
                     updateHintWarning();
                     clearScoreGlow();
                     playClickSafe();
+                    saveState(); // добавили сохранение
                     return;
                 }
 
@@ -4777,10 +4814,12 @@
                     showNewReceive();
                 }
                 if (mode === 'send' && !isMouseInput) updateInputDots();
+                // Не сбрасываем streak при смене языка
                 streakValue.textContent = streak;
                 recordValue.textContent = record;
                 clearScoreGlow();
                 playClickSafe();
+                saveState(); // добавили сохранение
             }
 
             // ======================== INIT ========================
@@ -4789,18 +4828,43 @@
                 setActiveHand('right');
 
                 loadRecord();
+                loadStreak(); // ЗАГРУЖАЕМ СОХРАНЁННЫЙ СЧЁТ
+
+                // ========== ВОССТАНОВЛЕНИЕ СОСТОЯНИЯ ==========
+                const savedMode = localStorage.getItem('azbuka_mode');
+                if (savedMode) mode = savedMode;
+
+                const savedLanguage = localStorage.getItem('azbuka_language');
+                if (savedLanguage) language = savedLanguage;
+
+                const savedHint = localStorage.getItem('azbuka_hint');
+                if (savedHint !== null) hintVisible = savedHint === '1';
+
+                // Применить язык
+                setLanguageData(language);
+                fullSymbols = buildFullSymbols();
+                // =============================================
+
                 document.addEventListener('keydown', handleKeyDown);
                 document.addEventListener('keyup', handleKeyUp);
                 window.addEventListener('blur', handleBlur);
-                mode = 'send';
+                // mode уже может быть изменён, поэтому не переопределяем его
                 setModeUI();
                 updateFingerLabels();
                 updateInstruction();
-                showNewLetter();
+                // Показываем начальную букву/слово, если они ещё не инициализированы
+                if (mode === 'send' || mode === 'full') {
+                    if (!currentLetter) showNewSymbol();
+                } else if (mode === 'dictionary') {
+                    if (!currentWord) initDictionaryWord();
+                } else if (mode === 'receive') {
+                    if (!currentLetter) showNewReceive();
+                }
                 if (isTouchDevice && lastSendInputMode) {
                     activateMouseInput();
                 }
-                streakValue.textContent = '0';
+                // Уже загружено через loadStreak
+                // streakValue.textContent = '0'; // удалено
                 recordValue.textContent = record;
                 buildDecodingTable();
                 buildAlphabetButtons();
