@@ -1868,6 +1868,7 @@
                         <span class="peer-id-label">Ваш ID:</span>
                         <span class="peer-id-value" id="peerIdDisplay"></span>
                         <button class="chat-icon-btn" id="copyPeerIdBtn" title="Копировать ID">📋</button>
+                        <button class="chat-icon-btn" id="inviteBtn" title="Скопировать ссылку-приглашение">🔗</button>
                     </div>
                     <div class="chat-control-group">
                         <span class="peer-id-label">ID друга:</span>
@@ -1925,6 +1926,7 @@
                             <span class="menu-item-label">Ваш ID:</span>
                             <span class="peer-id-value" id="peerIdDisplayMenu"></span>
                             <button class="chat-icon-btn" id="copyPeerIdBtnMenu" style="margin-left:auto;">📋</button>
+                            <button class="chat-icon-btn" id="inviteBtnMenu" title="Скопировать ссылку-приглашение">🔗</button>
                         </div>
                         <div class="menu-item" style="display: flex; gap: 4px;">
                             <span class="menu-item-label">ID друга:</span>
@@ -2503,6 +2505,7 @@
             const chatControls = document.getElementById('chatControls');
             const peerIdDisplay = document.getElementById('peerIdDisplay');
             const copyPeerIdBtn = document.getElementById('copyPeerIdBtn');
+            const inviteBtn = document.getElementById('inviteBtn');
             const remotePeerIdInput = document.getElementById('remotePeerIdInput');
             const connectPeerBtn = document.getElementById('connectPeerBtn');
             const disconnectPeerBtn = document.getElementById('disconnectPeerBtn');
@@ -2513,6 +2516,7 @@
             const menuConnectionSection = document.getElementById('menuConnectionSection');
             const peerIdDisplayMenu = document.getElementById('peerIdDisplayMenu');
             const copyPeerIdBtnMenu = document.getElementById('copyPeerIdBtnMenu');
+            const inviteBtnMenu = document.getElementById('inviteBtnMenu');
             const remotePeerIdInputMenu = document.getElementById('remotePeerIdInputMenu');
             const connectPeerBtnMenu = document.getElementById('connectPeerBtnMenu');
             const disconnectPeerBtnMenu = document.getElementById('disconnectPeerBtnMenu');
@@ -2533,7 +2537,7 @@
             const RESULT_DISPLAY = 600;
             const RELEASE_DELAY = 5000;
             const STORAGE_KEY = 'azbukaRecord';
-            const STORAGE_KEY_STREAK = 'azbukaStreak'; // НОВЫЙ КЛЮЧ ДЛЯ СЧЁТА
+            const STORAGE_KEY_STREAK = 'azbukaStreak';
 
             let mode = 'send';
             let currentLetter = null;
@@ -2566,16 +2570,13 @@
 
             let touchSendBits = [0,0,0,0,0];
 
-            // ======== НОВАЯ ПЕРЕМЕННАЯ ДЛЯ ХРАНЕНИЯ ТЕКУЩЕГО СООБЩЕНИЯ СТАТУСА ========
             let currentStatusMessage = '';
 
-            // ======== ПЕРЕМЕННЫЕ ДЛЯ РУК ========
             let leftHanded = false;
             let handOrder = [0, 1, 2, 3, 4];
             let lastReceivedCode = null;
             let activeHand = 'right';
 
-            // Сохраняем руку перед активацией мышиного ввода и перед входом в full
             let savedHandBeforeMouse = false;
             let savedHandBeforeFull = false;
 
@@ -2591,37 +2592,26 @@
                     activeHand = 'right';
                     leftHanded = false;
                 }
-                // Обновить порядок отображения для чата
                 updateHandOrder();
-                // Обновить метки и data-finger для обычных кружков
                 updateFingerLabels();
-                // Обновить текст кнопки (если видна)
                 const label = document.getElementById('handToggleLabel');
                 if (label) {
                     label.textContent = leftHanded ? 'Правая рука' : 'Левая рука';
                 }
-                // Мгновенно обновить все подсказки и кружки
                 refreshAllHints();
-                // Обновить отображение чата (если активен)
                 updateAllChatDisplay();
             }
 
-            // ======== МГНОВЕННОЕ ОБНОВЛЕНИЕ ВСЕХ ПОДСКАЗОК ========
             function refreshAllHints() {
-                // Обновляем targetDots (позиция)
                 if (currentCode) {
                     updateTargetDots(currentCode, currentDirections || '');
                 }
-                // Обновляем inputDots (нажато)
                 updateInputDots();
-                // Обновляем receiveDots, если режим приёма
                 if (mode === 'receive' && currentCode) {
                     updateReceiveDots();
                 }
-                // Инструкция уже обновлена в updateFingerLabels
             }
 
-            // ======== ОБНОВЛЕНИЕ ВИЗУАЛА РУК (для обычного тренажёра) ========
             function updateFingerLabels() {
                 const targetDots = getTargetDots();
                 const inputDots = getInputDots();
@@ -2642,10 +2632,9 @@
                 updateTouchLabels();
             }
 
-            // ======== ИСПРАВЛЕННАЯ ФУНКЦИЯ updateInstruction ========
             function updateInstruction() {
                 const rightKeys = ['SPC', 'J', 'K', 'L', ':'];
-                const leftKeys = ['A', 'S', 'D', 'F', 'SPC']; // пробел справа для левой руки
+                const leftKeys = ['A', 'S', 'D', 'F', 'SPC'];
                 const topRow = document.getElementById('instructionRowTop');
                 const bottomRow = document.getElementById('instructionRowBottom');
                 let topKeys, topLabel, bottomKeys, bottomLabel;
@@ -2672,7 +2661,6 @@
                         bottomKeys.map(k => `<span class="key-badge">${k}</span>`).join('') +
                         `<div class="hint-placeholder"></div>`;
                 }
-                // Убедимся, что highlight только на верхней строке
                 bottomRow.querySelectorAll('.key-badge').forEach(el => el.classList.remove('highlight'));
                 topRow.querySelectorAll('.key-badge').forEach(el => el.classList.add('highlight'));
             }
@@ -2687,14 +2675,12 @@
                 });
             }
 
-            // ======== ОБНОВЛЕНИЕ handOrder ДЛЯ ЧАТА ========
             function updateHandOrder() {
                 if (leftHanded) {
                     handOrder = [4, 3, 2, 1, 0];
                 } else {
                     handOrder = [0, 1, 2, 3, 4];
                 }
-                // обновить все отображения чата
                 updateAllChatDisplay();
             }
 
@@ -2708,14 +2694,12 @@
                 updateTouchLabels();
             }
 
-            // ======== ПЕРЕКЛЮЧЕНИЕ РУКИ ЧЕРЕЗ КНОПКУ (мобильные) ========
             function toggleHand() {
                 const newHand = leftHanded ? 'right' : 'left';
                 setActiveHand(newHand);
                 playClickSafe();
             }
 
-            // ======== ПОЛУЧЕНИЕ БИТОВ ВВОДА ========
             function getCurrentInputCodeBits() {
                 const bits = [0,0,0,0,0];
                 const map = activeHand === 'right' ? keyToBitRight : keyToBitLeft;
@@ -2737,9 +2721,7 @@
 
             function activateMouseInput() {
                 if (mode === 'chat' || (mode !== 'send' && mode !== 'dictionary' && mode !== 'full') || isMouseInput) return;
-                // Сохраняем текущую руку (которая была выбрана для клавиатуры)
                 savedHandBeforeMouse = leftHanded;
-                // Принудительно ставим правую руку для мышиного ввода
                 setActiveHand('right');
                 isMouseInput = true;
                 pressedKeys.clear();
@@ -2766,7 +2748,6 @@
                     state = 'idle';
                 }
                 lastSendInputMode = false;
-                // Восстанавливаем сохранённую руку, если мы не в full режиме (в full всегда правая)
                 if (mode !== 'full') {
                     setActiveHand(savedHandBeforeMouse ? 'left' : 'right');
                 }
@@ -2810,16 +2791,13 @@
                 }
             }
 
-            // ======== ИСПРАВЛЕННАЯ ФУНКЦИЯ updateTargetDots ========
             function updateTargetDots(code, directions) {
                 const dots = getTargetDots();
-                // Сбросить все active
                 dots.forEach(d => d.classList.remove('active', 'direction-active'));
                 for (let i = 0; i < 5; i++) {
                     const dot = dots.find(d => parseInt(d.dataset.finger, 10) === i);
                     if (dot) dot.classList.toggle('active', code[i] === '1');
                 }
-                // direction-dots
                 if (dots.length > 5 && directions) {
                     const dirDots = dots.slice(5);
                     const dirs = directions.split('');
@@ -2838,7 +2816,6 @@
                 }
             }
 
-            // ======== ОБНОВЛЕНИЕ receiveDots (по индексам, без data-finger) ========
             function updateReceiveDots() {
                 if (!currentCode) return;
                 for (let i = 0; i < 5; i++) {
@@ -3100,7 +3077,6 @@
                 startReceiveChar(char, true);
             }
 
-            // ======== ИСПРАВЛЕННЫЕ ФУНКЦИИ showNewReceive и retrySameLetter (используем индексы) ========
             function showNewReceive() {
                 clearAllTimeouts();
                 if (mode !== 'receive') return;
@@ -3259,7 +3235,7 @@
                     const oldStreak = streak;
                     streak += wordLength;
                     streakValue.textContent = streak;
-                    saveStreak(); // СОХРАНЯЕМ СЧЁТ
+                    saveStreak();
 
                     let crossedMilestone = false;
                     const next10 = Math.ceil((oldStreak + 1) / 10) * 10;
@@ -3406,9 +3382,7 @@
                 }
             }
 
-            // ======== ОБРАБОТЧИКИ КЛАВИАТУРЫ ========
             function handleKeyDown(e) {
-                // На мобильных устройствах игнорируем клавиатуру (используем сенсорный ввод)
                 if (isTouchDevice) {
                     return;
                 }
@@ -3422,7 +3396,6 @@
                     if (!allRelevantCodes.has(e.code)) return;
                     e.preventDefault();
                     if (e.repeat) return;
-                    // Переключение руки через клавиши
                     if (rightOnly.has(e.code)) {
                         setActiveHand('right');
                     } else if (leftOnly.has(e.code)) {
@@ -3441,7 +3414,6 @@
                     if (!allRelevantCodes.has(e.code)) return;
                     e.preventDefault();
 
-                    // Переключение руки
                     if (rightOnly.has(e.code)) setActiveHand('right');
                     else if (leftOnly.has(e.code)) setActiveHand('left');
 
@@ -3473,7 +3445,6 @@
                 if (!allRelevantCodes.has(e.code)) return;
                 e.preventDefault();
 
-                // Переключение руки
                 if (rightOnly.has(e.code)) setActiveHand('right');
                 else if (leftOnly.has(e.code)) setActiveHand('left');
 
@@ -3498,7 +3469,6 @@
             }
 
             function handleKeyUp(e) {
-                // На мобильных устройствах игнорируем клавиатуру
                 if (isTouchDevice) {
                     return;
                 }
@@ -3670,18 +3640,14 @@
                 }, RESULT_DISPLAY);
             }
 
-            // ======== ИСПРАВЛЕННАЯ ФУНКЦИЯ updateInputDots ========
             function updateInputDots() {
                 const dots = getInputDots();
                 const bits = isMouseInput ? mouseInputBits : getCurrentInputCodeBits();
-                // Сбросить все pressed
                 dots.forEach(d => d.classList.remove('pressed', 'direction-pressed'));
-                // Установить pressed для битов
                 for (let i = 0; i < 5; i++) {
                     const dot = dots.find(d => parseInt(d.dataset.finger, 10) === i);
                     if (dot) dot.classList.toggle('pressed', bits[i] === 1);
                 }
-                // Обработка direction-dots (полный режим)
                 if (dots.length > 5) {
                     const dirDots = dots.slice(5);
                     const dirs = isMouseInput ? mouseDirections : getCurrentInputDirections();
@@ -3872,9 +3838,7 @@
                 }
 
                 if (newMode === 'full') {
-                    // Сохраняем текущую руку (или ту, что была до мышиного ввода)
                     savedHandBeforeFull = isMouseInput ? savedHandBeforeMouse : leftHanded;
-                    // Принудительно правая рука
                     setActiveHand('right');
                     menuLangToggle.style.display = 'none';
                     if (!isMouseInput) {
@@ -3897,7 +3861,7 @@
                     showNewSymbol();
                     setModeUI();
                     menuDropdown.classList.remove('open');
-                    saveState(); // добавили сохранение
+                    saveState();
                     return;
                 } else if (newMode === 'chat') {
                     menuLangToggle.style.display = '';
@@ -3912,11 +3876,9 @@
                     setModeUI();
                     menuDropdown.classList.remove('open');
                     playClickSafe();
-                    saveState(); // добавили сохранение
+                    saveState();
                     return;
                 } else {
-                    // Выходим из full или из другого режима
-                    // Если выходим из full, восстанавливаем сохранённую руку
                     if (mode === 'full' && savedHandBeforeFull !== undefined) {
                         setActiveHand(savedHandBeforeFull ? 'left' : 'right');
                         savedHandBeforeFull = false;
@@ -3960,7 +3922,7 @@
                 clearScoreGlow();
                 menuDropdown.classList.remove('open');
                 playClickSafe();
-                saveState(); // добавили сохранение
+                saveState();
             }
 
             function setModeUI() {
@@ -4127,7 +4089,6 @@
                     hintWrapper.classList.toggle('hint-hidden', !hintVisible);
                     mouseConfirmBtn.classList.remove('correct', 'error');
                     if (isTouchDevice) {
-                        // На мобильных всегда включаем мышиный ввод
                         if (!isMouseInput) activateMouseInput();
                     } else if (isMouseInput) {
                         updateMouseUI();
@@ -4159,7 +4120,6 @@
                         receiveArea.style.display = 'none';
                         hintWrapper.classList.toggle('hint-hidden', !hintVisible);
                         if (isTouchDevice) {
-                            // На мобильных всегда включаем мышиный ввод
                             if (!isMouseInput) activateMouseInput();
                         } else if (lastSendInputMode) {
                             activateMouseInput();
@@ -4237,6 +4197,15 @@
                     peerIdDisplay.textContent = peerId;
                     if (peerIdDisplayMenu) peerIdDisplayMenu.textContent = peerId;
                     updateConnectionUI();
+                    // Если есть ожидающее подключение (invite), соединяемся
+                    if (window._pendingJoin) {
+                        const joinId = window._pendingJoin;
+                        window._pendingJoin = null;
+                        // Убедимся, что мы ещё не подключены
+                        if (!conn || !conn.open) {
+                            connectToPeer(joinId);
+                        }
+                    }
                 });
                 peer.on('connection', (incomingConn) => {
                     if (conn) {
@@ -4283,8 +4252,8 @@
                 lastReceivedCode = null;
             }
 
-            function connectToPeer() {
-                const remoteId = remotePeerIdInput.value.trim() || remotePeerIdInputMenu.value.trim();
+            function connectToPeer(peerId) {
+                const remoteId = peerId || remotePeerIdInput.value.trim() || remotePeerIdInputMenu.value.trim();
                 if (!remoteId || !peer) return;
                 if (conn) conn.close();
                 conn = peer.connect(remoteId);
@@ -4337,6 +4306,47 @@
                 });
             }
 
+         function copyInviteLink() {
+    const myId = peerIdDisplay.textContent || peerIdDisplayMenu.textContent;
+    if (!myId) {
+        setStatus('Сначала дождитесь получения ID', 'warning');
+        return;
+    }
+    const base = window.location.origin + window.location.pathname;
+    const link = base + '?join=' + encodeURIComponent(myId);
+    navigator.clipboard.writeText(link).then(() => {
+        setStatus('Ссылка-приглашение скопирована!', 'success');
+        setTimeout(() => setStatus('', ''), 3000);
+        // Меняем иконку на галочку для обеих кнопок
+        if (inviteBtn) {
+            inviteBtn.textContent = '✓';
+            setTimeout(() => { inviteBtn.textContent = '🔗'; }, 2000);
+        }
+        if (inviteBtnMenu) {
+            inviteBtnMenu.textContent = '✓';
+            setTimeout(() => { inviteBtnMenu.textContent = '🔗'; }, 2000);
+        }
+    }).catch(() => {
+        // Fallback для браузеров без поддержки Clipboard API
+        const input = document.createElement('input');
+        input.value = link;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        setStatus('Ссылка скопирована!', 'success');
+        setTimeout(() => setStatus('', ''), 3000);
+        if (inviteBtn) {
+            inviteBtn.textContent = '✓';
+            setTimeout(() => { inviteBtn.textContent = '🔗'; }, 2000);
+        }
+        if (inviteBtnMenu) {
+            inviteBtnMenu.textContent = '✓';
+            setTimeout(() => { inviteBtnMenu.textContent = '🔗'; }, 2000);
+        }
+    });
+}
+
             function isStreakMilestone(n) {
                 if (n <= 0) return false;
                 if (n <= 100) return n % 10 === 0;
@@ -4347,7 +4357,7 @@
                 if (mode !== 'dictionary') {
                     streak++;
                     streakValue.textContent = streak;
-                    saveStreak(); // СОХРАНЯЕМ СЧЁТ
+                    saveStreak();
                     const milestone = isStreakMilestone(streak);
                     if (milestone) {
                         streakBadge.classList.add('correct-streak');
@@ -4391,7 +4401,7 @@
             function handleWrongAnswer() {
                 streak = 0;
                 streakValue.textContent = '0';
-                saveStreak(); // СОХРАНЯЕМ СЧЁТ (обнуление)
+                saveStreak();
                 streakBadge.classList.add('error-streak');
                 streakValue.classList.add('glow-error');
                 playWrong();
@@ -4446,7 +4456,6 @@
                 recordValue.textContent = record;
             }
 
-            // НОВЫЕ ФУНКЦИИ ДЛЯ СОХРАНЕНИЯ СЧЁТА
             function saveStreak() {
                 try {
                     localStorage.setItem(STORAGE_KEY_STREAK, streak.toString());
@@ -4463,7 +4472,6 @@
                 streakValue.textContent = streak;
             }
 
-            // ========== СОХРАНЕНИЕ СОСТОЯНИЯ (РЕЖИМ, ЯЗЫК, ПОДСКАЗКИ) ==========
             function saveState() {
                 try {
                     localStorage.setItem('azbuka_mode', mode);
@@ -4477,7 +4485,7 @@
                 if (!hintVisible) {
                     streak = 0;
                     streakValue.textContent = '0';
-                    saveStreak(); // СОХРАНЯЕМ СЧЁТ (обнуление)
+                    saveStreak();
                     streakBadge.classList.remove('flash', 'correct-streak', 'error-streak');
                     streakValue.classList.remove('glow-correct', 'glow-error');
                     recordBadge.classList.remove('record-correct');
@@ -4508,7 +4516,7 @@
                 updateHintWarning();
                 menuDropdown.classList.remove('open');
                 recordValue.textContent = record;
-                saveState(); // добавили сохранение
+                saveState();
             }
 
             function applyHintVisibility() {
@@ -4801,7 +4809,7 @@
                     updateHintWarning();
                     clearScoreGlow();
                     playClickSafe();
-                    saveState(); // добавили сохранение
+                    saveState();
                     return;
                 }
 
@@ -4814,21 +4822,19 @@
                     showNewReceive();
                 }
                 if (mode === 'send' && !isMouseInput) updateInputDots();
-                // Не сбрасываем streak при смене языка
                 streakValue.textContent = streak;
                 recordValue.textContent = record;
                 clearScoreGlow();
                 playClickSafe();
-                saveState(); // добавили сохранение
+                saveState();
             }
 
             // ======================== INIT ========================
             function init() {
-                // По умолчанию правая рука
                 setActiveHand('right');
 
                 loadRecord();
-                loadStreak(); // ЗАГРУЖАЕМ СОХРАНЁННЫЙ СЧЁТ
+                loadStreak();
 
                 // ========== ВОССТАНОВЛЕНИЕ СОСТОЯНИЯ ==========
                 const savedMode = localStorage.getItem('azbuka_mode');
@@ -4840,7 +4846,6 @@
                 const savedHint = localStorage.getItem('azbuka_hint');
                 if (savedHint !== null) hintVisible = savedHint === '1';
 
-                // Применить язык
                 setLanguageData(language);
                 fullSymbols = buildFullSymbols();
                 // =============================================
@@ -4848,11 +4853,9 @@
                 document.addEventListener('keydown', handleKeyDown);
                 document.addEventListener('keyup', handleKeyUp);
                 window.addEventListener('blur', handleBlur);
-                // mode уже может быть изменён, поэтому не переопределяем его
                 setModeUI();
                 updateFingerLabels();
                 updateInstruction();
-                // Показываем начальную букву/слово, если они ещё не инициализированы
                 if (mode === 'send' || mode === 'full') {
                     if (!currentLetter) showNewSymbol();
                 } else if (mode === 'dictionary') {
@@ -4863,15 +4866,17 @@
                 if (isTouchDevice && lastSendInputMode) {
                     activateMouseInput();
                 }
-                // Уже загружено через loadStreak
-                // streakValue.textContent = '0'; // удалено
                 recordValue.textContent = record;
                 buildDecodingTable();
                 buildAlphabetButtons();
                 updateSoundButton();
                 updateLangButton();
 
-                // Скрыть кнопку смены руки на десктопе
+                // ★★★ ИСПРАВЛЕНИЕ БАГА: инициализация Peer при загрузке в режиме чата ★★★
+                if (mode === 'chat' && !peer) {
+                    initPeer();
+                }
+
                 const handToggleBtn = document.getElementById('handToggleBtn');
                 if (!isTouchDevice) {
                     handToggleBtn.style.display = 'none';
@@ -4957,7 +4962,6 @@
                     menuDropdown.classList.remove('open');
                 });
 
-                // Обработчик кнопки левой руки
                 document.getElementById('handToggleBtn').addEventListener('click', function(e) {
                     e.stopPropagation();
                     toggleHand();
@@ -4981,14 +4985,16 @@
                 });
 
                 copyPeerIdBtn.addEventListener('click', copyPeerId);
-                connectPeerBtn.addEventListener('click', connectToPeer);
+                inviteBtn.addEventListener('click', copyInviteLink);
+                connectPeerBtn.addEventListener('click', function() { connectToPeer(); });
                 disconnectPeerBtn.addEventListener('click', disconnectPeer);
                 remotePeerIdInput.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') connectToPeer();
                 });
 
                 copyPeerIdBtnMenu.addEventListener('click', copyPeerId);
-                connectPeerBtnMenu.addEventListener('click', connectToPeer);
+                inviteBtnMenu.addEventListener('click', copyInviteLink);
+                connectPeerBtnMenu.addEventListener('click', function() { connectToPeer(); });
                 disconnectPeerBtnMenu.addEventListener('click', disconnectPeer);
                 remotePeerIdInputMenu.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter') connectToPeer();
@@ -5001,6 +5007,28 @@
                 });
 
                 setupTouchChat();
+
+                // Обработка параметра join
+                const urlParams = new URLSearchParams(window.location.search);
+                const joinPeerId = urlParams.get('join');
+                if (joinPeerId) {
+                    // Если параметр есть, переключаемся в чат и запоминаем ID для подключения
+                    window._pendingJoin = joinPeerId;
+                    // Если мы уже в режиме чата, то peer может уже быть инициализирован, но мы переключим заново
+                    if (mode !== 'chat') {
+                        switchMode('chat');
+                    } else {
+                        // Если уже в чате, инициируем подключение после открытия peer
+                        if (peer && peer.id) {
+                            connectToPeer(joinPeerId);
+                        } else {
+                            // Если peer ещё не создан, он будет создан при switchMode, но мы уже в чате? 
+                            // Вызовем initPeer вручную, если ещё нет peer
+                            if (!peer) initPeer();
+                            // Или положим в pendingJoin, который обработается в on('open')
+                        }
+                    }
+                }
 
                 window.addEventListener('beforeunload', () => {
                     if (peer) peer.destroy();
