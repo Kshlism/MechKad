@@ -3787,404 +3787,417 @@
                 }
             }
 
-            // ======================== MODE SWITCH ========================
-            function switchMode(newMode) {
-                if (newMode === mode) {
-                    menuDropdown.classList.remove('open');
-                    return;
-                }
+function switchMode(newMode) {
+    if (newMode === mode) {
+        menuDropdown.classList.remove('open');
+        return;
+    }
 
-                if (mode === 'chat' && newMode !== 'chat') {
-                    if (peer) {
-                        peer.destroy();
-                        peer = null;
-                        conn = null;
-                        connectedToPeer = false;
-                        updateConnectionUI();
+    if (mode === 'chat' && newMode !== 'chat') {
+        if (peer) {
+            peer.destroy();
+            peer = null;
+            conn = null;
+            connectedToPeer = false;
+            updateConnectionUI();
+        }
+    }
+
+    clearAllTimeouts();
+    const wasMouseInput = isMouseInput;
+    if (mode === 'send' || mode === 'full') {
+        lastSendInputMode = wasMouseInput;
+    }
+    pressedKeys.clear();
+    receiveKeyIsDown = false;
+    state = 'idle';
+    resetAllDots();
+    setStatus('', '');
+    letterInner.classList.remove('correct', 'error', 'timer-active', 'reveal');
+    receiveLetterDisplay.classList.remove('correct', 'error');
+    mainCard.classList.remove('correct-flash', 'error-flash');
+    receiveLetterDisplay.style.color = 'transparent';
+    receiveLetterDisplay.style.transform = '';
+    receiveLetterDisplay.style.transition = '';
+    receiveLetterDisplay.textContent = '\u00A0';
+    if (revealTimeoutId) { clearTimeout(revealTimeoutId); revealTimeoutId = null; }
+
+    touchSendBits = [0,0,0,0,0];
+    updateTouchSendDisplay();
+    chatTouchGrid.style.display = 'none';
+    chatContainer.style.display = 'none';
+
+    if (newMode !== 'full' && newMode !== 'chat') {
+        if (isMouseInput) {
+            isMouseInput = false;
+            inputDotsContainer.classList.remove('mouse-active');
+            resetMouseInput();
+            lastSendInputMode = false;
+        }
+    }
+
+    if (newMode === 'full') {
+        savedHandBeforeFull = isMouseInput ? savedHandBeforeMouse : leftHanded;
+        setActiveHand('right');
+        menuLangToggle.style.display = 'none';
+        if (!isMouseInput) {
+            isMouseInput = true;
+            inputDotsContainer.classList.add('mouse-active');
+        }
+        // Направления показываются в setModeUI
+        updateMouseUI();
+        if (hintVisible) {
+            hintWrapper.classList.remove('hint-hidden');
+        } else {
+            hintWrapper.classList.add('hint-hidden');
+        }
+        mode = newMode;
+        streakBadge.style.display = 'flex';
+        recordBadge.style.display = 'flex';
+        chatControls.style.display = 'none';
+        showNewSymbol();
+        setModeUI();
+        menuDropdown.classList.remove('open');
+        saveState();
+        return;
+    } else if (newMode === 'chat') {
+        menuLangToggle.style.display = '';
+        // Направления скрываются в setModeUI
+        streakBadge.style.display = 'none';
+        recordBadge.style.display = 'none';
+        chatControls.style.display = 'none';
+        mode = newMode;
+        initPeer();
+        setModeUI();
+        menuDropdown.classList.remove('open');
+        playClickSafe();
+        saveState();
+        return;
+    } else {
+        if (mode === 'full' && savedHandBeforeFull !== undefined) {
+            setActiveHand(savedHandBeforeFull ? 'left' : 'right');
+            savedHandBeforeFull = false;
+        }
+        menuLangToggle.style.display = '';
+        // Направления скрываются в setModeUI
+        streakBadge.style.display = 'flex';
+        recordBadge.style.display = 'flex';
+        chatControls.style.display = 'none';
+    }
+
+    mode = newMode;
+    currentLetter = null;
+    currentCode = null;
+    currentDirections = '';
+    currentLang = null;
+
+    if (mode === 'dictionary') {
+        wordHistory = [];
+        initDictionaryWord();
+        updateFingerLabels();
+        updateInstruction();
+        setModeUI();
+    } else if (mode === 'send') {
+        updateFingerLabels();
+        updateInstruction();
+        showNewLetter();
+        setModeUI();
+    } else if (mode === 'receive') {
+        if (hintVisible) buildDecodingTable();
+        else buildAlphabetButtons();
+        showNewReceive();
+        setModeUI();
+    } else {
+        setModeUI();
+    }
+    streakValue.textContent = streak;
+    recordValue.textContent = record;
+    clearScoreGlow();
+    menuDropdown.classList.remove('open');
+    playClickSafe();
+    saveState();
+}
+
+function setModeUI() {
+    const isChat = mode === 'chat';
+    const isFull = mode === 'full';
+    const container = document.querySelector('.container');
+    const contentArea = document.getElementById('contentArea');
+
+    if (isChat) {
+        container.classList.add('chat-mode');
+    } else {
+        container.classList.remove('chat-mode');
+    }
+
+    mainCard.style.display = isChat ? 'none' : '';
+    instructionsWrapper.style.display = (isChat || isFull) ? 'none' : '';
+    mouseConfirmWrapper.style.display = (isChat || isFull) ? 'none' : '';
+    if (isFull || mode === 'send' || mode === 'dictionary') {
+        if (isMouseInput) mouseConfirmWrapper.style.display = 'flex';
+    }
+
+    if (isChat && isTouchDevice) {
+        chatContainer.style.display = 'none';
+        chatTouchGrid.style.display = 'flex';
+        container.classList.add('chat-layout');
+        contentArea.classList.add('chat-layout');
+    } else if (isChat) {
+        chatContainer.style.display = 'block';
+        chatTouchGrid.style.display = 'none';
+        container.classList.remove('chat-layout');
+        contentArea.classList.remove('chat-layout');
+    } else {
+        chatContainer.style.display = 'none';
+        chatTouchGrid.style.display = 'none';
+        container.classList.remove('chat-layout');
+        contentArea.classList.remove('chat-layout');
+    }
+
+    if (isChat) {
+        streakBadge.style.display = 'none';
+        recordBadge.style.display = 'none';
+    } else {
+        streakBadge.style.display = 'flex';
+        recordBadge.style.display = 'flex';
+    }
+    if (hintVisible && !isChat) {
+        recordBadge.style.display = 'none';
+        hintBadge.style.display = 'flex';
+    } else if (!isChat) {
+        recordBadge.style.display = 'flex';
+        hintBadge.style.display = 'none';
+    } else {
+        hintBadge.style.display = 'none';
+    }
+
+    menuHintToggle.style.display = (isChat) ? 'none' : '';
+    menuLangToggle.style.display = (isChat || isFull) ? 'none' : '';
+
+    radioSend.textContent = mode === 'send' ? '●' : '○';
+    radioReceive.textContent = mode === 'receive' ? '●' : '○';
+    radioDictionary.textContent = mode === 'dictionary' ? '●' : '○';
+    radioFull.textContent = isFull ? '●' : '○';
+    radioChat.textContent = isChat ? '●' : '○';
+    radioSend.className = 'menu-item-radio' + (mode === 'send' ? ' active' : '');
+    radioReceive.className = 'menu-item-radio' + (mode === 'receive' ? ' active' : '');
+    radioDictionary.className = 'menu-item-radio' + (mode === 'dictionary' ? ' active' : '');
+    radioFull.className = 'menu-item-radio' + (isFull ? ' active' : '');
+    radioChat.className = 'menu-item-radio' + (isChat ? ' active' : '');
+
+    modeItems.forEach(item => item.classList.remove('active'));
+    const activeModeItem = document.querySelector(`.mode-item[data-mode="${mode}"]`);
+    if (activeModeItem) activeModeItem.classList.add('active');
+
+    if (isChat) {
+        menuBtn.style.display = 'none';
+        menuBtnAlt.style.display = 'inline-flex';
+        menuConnectionSection.style.display = '';
+        updateConnectionUI();
+    } else {
+        menuBtn.style.display = '';
+        menuBtnAlt.style.display = 'none';
+        menuConnectionSection.style.display = 'none';
+    }
+
+    const menuDropdownElem = document.getElementById('menuDropdown');
+    const titleArea = document.querySelector('.title-area');
+    const headerRight = document.querySelector('.header-right');
+    const infoBtn = document.getElementById('menuInfo');
+    const infoSection = infoBtn.parentElement;
+
+    if (isChat) {
+        if (menuDropdownElem.parentElement !== titleArea) {
+            titleArea.appendChild(menuDropdownElem);
+        }
+        let existingDivider = infoSection.previousElementSibling;
+        if (!existingDivider || existingDivider.className !== 'menu-divider') {
+            const divider = document.createElement('div');
+            divider.className = 'menu-divider';
+            infoSection.parentElement.insertBefore(divider, infoSection);
+        }
+    } else {
+        if (menuDropdownElem.parentElement !== headerRight) {
+            headerRight.appendChild(menuDropdownElem);
+        }
+        const possibleDivider = infoSection.previousElementSibling;
+        if (possibleDivider && possibleDivider.className === 'menu-divider') {
+            possibleDivider.remove();
+        }
+    }
+
+    if (isChat) {
+        if (isMouseInput) {
+            isMouseInput = false;
+            inputDotsContainer.classList.remove('mouse-active');
+            resetMouseInput();
+        }
+        updateTouchLabels();
+        if (lastReceivedCode) {
+            updateChatReceiveDots(lastReceivedCode);
+            if (isTouchDevice) updateTouchReceiveDisplay(lastReceivedCode);
+        }
+        if (!isTouchDevice) {
+            updateChatSendDots();
+        } else {
+            updateTouchSendDisplay();
+        }
+        // Управление видимостью стрелок в чате (скрыты)
+        document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'none');
+        document.getElementById('hintRow').classList.remove('full-mode');
+        document.getElementById('inputRow').classList.remove('full-mode');
+        return;
+    }
+
+    if (!isFull) {
+        hideLangFlag();
+    }
+
+    if (isFull) {
+        letterDisplay.style.display = '';
+        receiveArea.style.display = 'none';
+        dictionaryWordArea.style.display = 'none';
+        hintWrapper.classList.toggle('hint-hidden', !hintVisible);
+        if (!isMouseInput) {
+            isMouseInput = true;
+            inputDotsContainer.classList.add('mouse-active');
+        }
+        updateMouseUI();
+        instructionsWrapper.classList.add('hint-hidden');
+        document.getElementById('hintRow').style.display = '';
+        document.getElementById('inputRow').style.display = '';
+        letterInner.classList.remove('reveal', 'correct', 'error');
+        if (!currentLetter) showNewSymbol();
+        else {
+            letterInner.textContent = currentLetter;
+            const oldFlag = letterDisplay.querySelector('.lang-flag');
+            if (oldFlag) oldFlag.remove();
+            updateLangFlagVisibility();
+            updateTargetDots(currentCode, currentDirections);
+        }
+        resetMouseInput();
+
+        // === ПОКАЗЫВАЕМ СТРЕЛКИ В ПОЛНОМ РЕЖИМЕ ===
+        document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'flex');
+        document.getElementById('hintRow').classList.add('full-mode');
+        document.getElementById('inputRow').classList.add('full-mode');
+        return;
+    }
+
+    if (mode === 'dictionary') {
+        letterDisplay.style.display = 'none';
+        receiveArea.style.display = 'none';
+        dictionaryWordArea.style.display = '';
+        hintWrapper.classList.toggle('hint-hidden', !hintVisible);
+        mouseConfirmBtn.classList.remove('correct', 'error');
+        if (isTouchDevice) {
+            if (!isMouseInput) activateMouseInput();
+        } else if (isMouseInput) {
+            updateMouseUI();
+        } else {
+            updateKeyboardUI();
+            if (hintVisible) {
+                instructionKeyboard.style.display = 'flex';
+                decodingTableContainer.style.display = 'none';
+                alphabetButtons.style.display = 'none';
+            } else {
+                instructionKeyboard.style.display = 'none';
+                decodingTableContainer.style.display = 'none';
+                alphabetButtons.style.display = 'none';
+            }
+            instructionsWrapper.classList.toggle('hint-hidden', !hintVisible);
+        }
+        mouseConfirmWrapper.style.display = isMouseInput ? 'flex' : 'none';
+        document.getElementById('hintRow').style.display = '';
+        document.getElementById('inputRow').style.display = '';
+        patternsSection.style.display = '';
+        // Скрываем стрелки
+        document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'none');
+        document.getElementById('hintRow').classList.remove('full-mode');
+        document.getElementById('inputRow').classList.remove('full-mode');
+    } else {
+        const isSend = mode === 'send';
+        mainCard.classList.toggle('send-mode', isSend);
+        dictionaryWordArea.style.display = 'none';
+        modeSendArea.style.display = '';
+        patternsSection.style.display = '';
+        if (isSend) {
+            letterDisplay.style.display = '';
+            receiveArea.style.display = 'none';
+            hintWrapper.classList.toggle('hint-hidden', !hintVisible);
+            if (isTouchDevice) {
+                if (!isMouseInput) activateMouseInput();
+            } else if (lastSendInputMode) {
+                activateMouseInput();
+            } else {
+                if (isMouseInput) deactivateMouseInput();
+                else updateKeyboardUI();
+            }
+            instructionsWrapper.classList.toggle('hint-hidden', !hintVisible || isMouseInput);
+            document.getElementById('hintRow').style.display = '';
+            document.getElementById('inputRow').style.display = '';
+            letterInner.classList.remove('reveal', 'correct', 'error');
+            if (!currentLetter) showNewLetter();
+            else {
+                letterInner.textContent = currentLetter;
+                const flag = letterDisplay.querySelector('.lang-flag');
+                if (flag) flag.remove();
+                updateTargetDots(currentCode, '');
+            }
+            // Скрываем стрелки
+            document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'none');
+            document.getElementById('hintRow').classList.remove('full-mode');
+            document.getElementById('inputRow').classList.remove('full-mode');
+        } else { // режим receive
+            letterDisplay.style.display = 'none';
+            receiveArea.style.display = 'flex';
+            instructionsWrapper.style.display = '';
+            if (hintVisible) {
+                instructionKeyboard.style.display = 'none';
+                decodingTableContainer.style.display = 'block';
+                alphabetButtons.style.display = 'none';
+                instructionsWrapper.classList.remove('hint-hidden');
+                buildDecodingTable();
+            } else {
+                instructionKeyboard.style.display = 'none';
+                decodingTableContainer.style.display = 'none';
+                alphabetButtons.style.display = 'flex';
+                instructionsWrapper.classList.remove('hint-hidden');
+                buildAlphabetButtons();
+            }
+            document.getElementById('hintRow').style.display = 'none';
+            document.getElementById('inputRow').style.display = 'none';
+            receiveLetterDisplay.classList.remove('correct', 'error', 'reveal', 'timer-active');
+            receiveLetterDisplay.style.color = 'transparent';
+            receiveLetterDisplay.style.transform = '';
+            receiveLetterDisplay.style.transition = '';
+            receiveLetterDisplay.textContent = '\u00A0';
+            mouseConfirmWrapper.style.display = 'none';
+            if (!currentLetter) showNewReceive();
+            else {
+                for (let i = 0; i < 5; i++) {
+                    if (receiveDots[i]) {
+                        receiveDots[i].classList.remove('correct', 'error');
+                        receiveDots[i].classList.toggle('lit', currentCode[i] === '1');
                     }
                 }
-
-                clearAllTimeouts();
-                const wasMouseInput = isMouseInput;
-                if (mode === 'send' || mode === 'full') {
-                    lastSendInputMode = wasMouseInput;
-                }
-                pressedKeys.clear();
-                receiveKeyIsDown = false;
-                state = 'idle';
-                resetAllDots();
-                setStatus('', '');
-                letterInner.classList.remove('correct', 'error', 'timer-active', 'reveal');
-                receiveLetterDisplay.classList.remove('correct', 'error');
-                mainCard.classList.remove('correct-flash', 'error-flash');
-                receiveLetterDisplay.style.color = 'transparent';
-                receiveLetterDisplay.style.transform = '';
-                receiveLetterDisplay.style.transition = '';
                 receiveLetterDisplay.textContent = '\u00A0';
-                if (revealTimeoutId) { clearTimeout(revealTimeoutId); revealTimeoutId = null; }
-
-                touchSendBits = [0,0,0,0,0];
-                updateTouchSendDisplay();
-                chatTouchGrid.style.display = 'none';
-                chatContainer.style.display = 'none';
-
-                if (newMode !== 'full' && newMode !== 'chat') {
-                    if (isMouseInput) {
-                        isMouseInput = false;
-                        inputDotsContainer.classList.remove('mouse-active');
-                        resetMouseInput();
-                        lastSendInputMode = false;
-                    }
-                }
-
-                if (newMode === 'full') {
-                    savedHandBeforeFull = isMouseInput ? savedHandBeforeMouse : leftHanded;
-                    setActiveHand('right');
-                    menuLangToggle.style.display = 'none';
-                    if (!isMouseInput) {
-                        isMouseInput = true;
-                        inputDotsContainer.classList.add('mouse-active');
-                    }
-                    document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'flex');
-                    document.getElementById('hintRow').classList.add('full-mode');
-                    document.getElementById('inputRow').classList.add('full-mode');
-                    updateMouseUI();
-                    if (hintVisible) {
-                        hintWrapper.classList.remove('hint-hidden');
-                    } else {
-                        hintWrapper.classList.add('hint-hidden');
-                    }
-                    mode = newMode;
-                    streakBadge.style.display = 'flex';
-                    recordBadge.style.display = 'flex';
-                    chatControls.style.display = 'none';
-                    showNewSymbol();
-                    setModeUI();
-                    menuDropdown.classList.remove('open');
-                    saveState();
-                    return;
-                } else if (newMode === 'chat') {
-                    menuLangToggle.style.display = '';
-                    document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'none');
-                    document.getElementById('hintRow').classList.remove('full-mode');
-                    document.getElementById('inputRow').classList.remove('full-mode');
-                    streakBadge.style.display = 'none';
-                    recordBadge.style.display = 'none';
-                    chatControls.style.display = 'none';
-                    mode = newMode;
-                    initPeer();
-                    setModeUI();
-                    menuDropdown.classList.remove('open');
-                    playClickSafe();
-                    saveState();
-                    return;
-                } else {
-                    if (mode === 'full' && savedHandBeforeFull !== undefined) {
-                        setActiveHand(savedHandBeforeFull ? 'left' : 'right');
-                        savedHandBeforeFull = false;
-                    }
-                    menuLangToggle.style.display = '';
-                    document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'none');
-                    document.getElementById('hintRow').classList.remove('full-mode');
-                    document.getElementById('inputRow').classList.remove('full-mode');
-                    streakBadge.style.display = 'flex';
-                    recordBadge.style.display = 'flex';
-                    chatControls.style.display = 'none';
-                }
-
-                mode = newMode;
-                currentLetter = null;
-                currentCode = null;
-                currentDirections = '';
-                currentLang = null;
-
-                if (mode === 'dictionary') {
-                    wordHistory = [];
-                    initDictionaryWord();
-                    updateFingerLabels();
-                    updateInstruction();
-                    setModeUI();
-                } else if (mode === 'send') {
-                    updateFingerLabels();
-                    updateInstruction();
-                    showNewLetter();
-                    setModeUI();
-                } else if (mode === 'receive') {
-                    if (hintVisible) buildDecodingTable();
-                    else buildAlphabetButtons();
-                    showNewReceive();
-                    setModeUI();
-                } else {
-                    setModeUI();
-                }
-                streakValue.textContent = streak;
-                recordValue.textContent = record;
-                clearScoreGlow();
-                menuDropdown.classList.remove('open');
-                playClickSafe();
-                saveState();
+                receiveLetterDisplay.style.color = 'transparent';
             }
-
-            function setModeUI() {
-                const isChat = mode === 'chat';
-                const isFull = mode === 'full';
-                const container = document.querySelector('.container');
-                const contentArea = document.getElementById('contentArea');
-
-                if (isChat) {
-                    container.classList.add('chat-mode');
-                } else {
-                    container.classList.remove('chat-mode');
-                }
-
-                mainCard.style.display = isChat ? 'none' : '';
-                instructionsWrapper.style.display = (isChat || isFull) ? 'none' : '';
-                mouseConfirmWrapper.style.display = (isChat || isFull) ? 'none' : '';
-                if (isFull || mode === 'send' || mode === 'dictionary') {
-                    if (isMouseInput) mouseConfirmWrapper.style.display = 'flex';
-                }
-
-                if (isChat && isTouchDevice) {
-                    chatContainer.style.display = 'none';
-                    chatTouchGrid.style.display = 'flex';
-                    container.classList.add('chat-layout');
-                    contentArea.classList.add('chat-layout');
-                } else if (isChat) {
-                    chatContainer.style.display = 'block';
-                    chatTouchGrid.style.display = 'none';
-                    container.classList.remove('chat-layout');
-                    contentArea.classList.remove('chat-layout');
-                } else {
-                    chatContainer.style.display = 'none';
-                    chatTouchGrid.style.display = 'none';
-                    container.classList.remove('chat-layout');
-                    contentArea.classList.remove('chat-layout');
-                }
-
-                if (isChat) {
-                    streakBadge.style.display = 'none';
-                    recordBadge.style.display = 'none';
-                } else {
-                    streakBadge.style.display = 'flex';
-                    recordBadge.style.display = 'flex';
-                }
-                if (hintVisible && !isChat) {
-                    recordBadge.style.display = 'none';
-                    hintBadge.style.display = 'flex';
-                } else if (!isChat) {
-                    recordBadge.style.display = 'flex';
-                    hintBadge.style.display = 'none';
-                } else {
-                    hintBadge.style.display = 'none';
-                }
-
-                menuHintToggle.style.display = (isChat) ? 'none' : '';
-                menuLangToggle.style.display = (isChat || isFull) ? 'none' : '';
-
-                radioSend.textContent = mode === 'send' ? '●' : '○';
-                radioReceive.textContent = mode === 'receive' ? '●' : '○';
-                radioDictionary.textContent = mode === 'dictionary' ? '●' : '○';
-                radioFull.textContent = isFull ? '●' : '○';
-                radioChat.textContent = isChat ? '●' : '○';
-                radioSend.className = 'menu-item-radio' + (mode === 'send' ? ' active' : '');
-                radioReceive.className = 'menu-item-radio' + (mode === 'receive' ? ' active' : '');
-                radioDictionary.className = 'menu-item-radio' + (mode === 'dictionary' ? ' active' : '');
-                radioFull.className = 'menu-item-radio' + (isFull ? ' active' : '');
-                radioChat.className = 'menu-item-radio' + (isChat ? ' active' : '');
-
-                modeItems.forEach(item => item.classList.remove('active'));
-                const activeModeItem = document.querySelector(`.mode-item[data-mode="${mode}"]`);
-                if (activeModeItem) activeModeItem.classList.add('active');
-
-                if (isChat) {
-                    menuBtn.style.display = 'none';
-                    menuBtnAlt.style.display = 'inline-flex';
-                    menuConnectionSection.style.display = '';
-                    updateConnectionUI();
-                } else {
-                    menuBtn.style.display = '';
-                    menuBtnAlt.style.display = 'none';
-                    menuConnectionSection.style.display = 'none';
-                }
-
-                const menuDropdownElem = document.getElementById('menuDropdown');
-                const titleArea = document.querySelector('.title-area');
-                const headerRight = document.querySelector('.header-right');
-                const infoBtn = document.getElementById('menuInfo');
-                const infoSection = infoBtn.parentElement;
-
-                if (isChat) {
-                    if (menuDropdownElem.parentElement !== titleArea) {
-                        titleArea.appendChild(menuDropdownElem);
-                    }
-                    let existingDivider = infoSection.previousElementSibling;
-                    if (!existingDivider || existingDivider.className !== 'menu-divider') {
-                        const divider = document.createElement('div');
-                        divider.className = 'menu-divider';
-                        infoSection.parentElement.insertBefore(divider, infoSection);
-                    }
-                } else {
-                    if (menuDropdownElem.parentElement !== headerRight) {
-                        headerRight.appendChild(menuDropdownElem);
-                    }
-                    const possibleDivider = infoSection.previousElementSibling;
-                    if (possibleDivider && possibleDivider.className === 'menu-divider') {
-                        possibleDivider.remove();
-                    }
-                }
-
-                if (isChat) {
-                    if (isMouseInput) {
-                        isMouseInput = false;
-                        inputDotsContainer.classList.remove('mouse-active');
-                        resetMouseInput();
-                    }
-                    updateTouchLabels();
-                    if (lastReceivedCode) {
-                        updateChatReceiveDots(lastReceivedCode);
-                        if (isTouchDevice) updateTouchReceiveDisplay(lastReceivedCode);
-                    }
-                    if (!isTouchDevice) {
-                        updateChatSendDots();
-                    } else {
-                        updateTouchSendDisplay();
-                    }
-                    return;
-                }
-
-                if (!isFull) {
-                    hideLangFlag();
-                }
-
-                if (isFull) {
-                    letterDisplay.style.display = '';
-                    receiveArea.style.display = 'none';
-                    dictionaryWordArea.style.display = 'none';
-                    hintWrapper.classList.toggle('hint-hidden', !hintVisible);
-                    if (!isMouseInput) {
-                        isMouseInput = true;
-                        inputDotsContainer.classList.add('mouse-active');
-                    }
-                    updateMouseUI();
-                    instructionsWrapper.classList.add('hint-hidden');
-                    document.getElementById('hintRow').style.display = '';
-                    document.getElementById('inputRow').style.display = '';
-                    letterInner.classList.remove('reveal', 'correct', 'error');
-                    if (!currentLetter) showNewSymbol();
-                    else {
-                        letterInner.textContent = currentLetter;
-                        const oldFlag = letterDisplay.querySelector('.lang-flag');
-                        if (oldFlag) oldFlag.remove();
-                        updateLangFlagVisibility();
-                        updateTargetDots(currentCode, currentDirections);
-                    }
-                    resetMouseInput();
-                    return;
-                }
-
-                if (mode === 'dictionary') {
-                    letterDisplay.style.display = 'none';
-                    receiveArea.style.display = 'none';
-                    dictionaryWordArea.style.display = '';
-                    hintWrapper.classList.toggle('hint-hidden', !hintVisible);
-                    mouseConfirmBtn.classList.remove('correct', 'error');
-                    if (isTouchDevice) {
-                        if (!isMouseInput) activateMouseInput();
-                    } else if (isMouseInput) {
-                        updateMouseUI();
-                    } else {
-                        updateKeyboardUI();
-                        if (hintVisible) {
-                            instructionKeyboard.style.display = 'flex';
-                            decodingTableContainer.style.display = 'none';
-                            alphabetButtons.style.display = 'none';
-                        } else {
-                            instructionKeyboard.style.display = 'none';
-                            decodingTableContainer.style.display = 'none';
-                            alphabetButtons.style.display = 'none';
-                        }
-                        instructionsWrapper.classList.toggle('hint-hidden', !hintVisible);
-                    }
-                    mouseConfirmWrapper.style.display = isMouseInput ? 'flex' : 'none';
-                    document.getElementById('hintRow').style.display = '';
-                    document.getElementById('inputRow').style.display = '';
-                    patternsSection.style.display = '';
-                } else {
-                    const isSend = mode === 'send';
-                    mainCard.classList.toggle('send-mode', isSend);
-                    dictionaryWordArea.style.display = 'none';
-                    modeSendArea.style.display = '';
-                    patternsSection.style.display = '';
-                    if (isSend) {
-                        letterDisplay.style.display = '';
-                        receiveArea.style.display = 'none';
-                        hintWrapper.classList.toggle('hint-hidden', !hintVisible);
-                        if (isTouchDevice) {
-                            if (!isMouseInput) activateMouseInput();
-                        } else if (lastSendInputMode) {
-                            activateMouseInput();
-                        } else {
-                            if (isMouseInput) deactivateMouseInput();
-                            else updateKeyboardUI();
-                        }
-                        instructionsWrapper.classList.toggle('hint-hidden', !hintVisible || isMouseInput);
-                        document.getElementById('hintRow').style.display = '';
-                        document.getElementById('inputRow').style.display = '';
-                        letterInner.classList.remove('reveal', 'correct', 'error');
-                        if (!currentLetter) showNewLetter();
-                        else {
-                            letterInner.textContent = currentLetter;
-                            const flag = letterDisplay.querySelector('.lang-flag');
-                            if (flag) flag.remove();
-                            updateTargetDots(currentCode, '');
-                        }
-                    } else {
-                        letterDisplay.style.display = 'none';
-                        receiveArea.style.display = 'flex';
-                        instructionsWrapper.style.display = '';
-                        if (hintVisible) {
-                            instructionKeyboard.style.display = 'none';
-                            decodingTableContainer.style.display = 'block';
-                            alphabetButtons.style.display = 'none';
-                            instructionsWrapper.classList.remove('hint-hidden');
-                            buildDecodingTable();
-                        } else {
-                            instructionKeyboard.style.display = 'none';
-                            decodingTableContainer.style.display = 'none';
-                            alphabetButtons.style.display = 'flex';
-                            instructionsWrapper.classList.remove('hint-hidden');
-                            buildAlphabetButtons();
-                        }
-                        document.getElementById('hintRow').style.display = 'none';
-                        document.getElementById('inputRow').style.display = 'none';
-                        receiveLetterDisplay.classList.remove('correct', 'error', 'reveal', 'timer-active');
-                        receiveLetterDisplay.style.color = 'transparent';
-                        receiveLetterDisplay.style.transform = '';
-                        receiveLetterDisplay.style.transition = '';
-                        receiveLetterDisplay.textContent = '\u00A0';
-                        mouseConfirmWrapper.style.display = 'none';
-                        if (!currentLetter) showNewReceive();
-                        else {
-                            for (let i = 0; i < 5; i++) {
-                                if (receiveDots[i]) {
-                                    receiveDots[i].classList.remove('correct', 'error');
-                                    receiveDots[i].classList.toggle('lit', currentCode[i] === '1');
-                                }
-                            }
-                            receiveLetterDisplay.textContent = '\u00A0';
-                            receiveLetterDisplay.style.color = 'transparent';
-                        }
-                    }
-                }
-                updateHintWarning();
-                updateLangButton();
-                if (statusText.textContent === '' || statusText.classList.contains('info')) {
-                    setStatus('', '');
-                }
-                clearScoreGlow();
-                updateSoundButton();
-            }
-
+            // Скрываем стрелки
+            document.querySelectorAll('.direction-dot').forEach(el => el.style.display = 'none');
+            document.getElementById('hintRow').classList.remove('full-mode');
+            document.getElementById('inputRow').classList.remove('full-mode');
+        }
+    }
+    updateHintWarning();
+    updateLangButton();
+    if (statusText.textContent === '' || statusText.classList.contains('info')) {
+        setStatus('', '');
+    }
+    clearScoreGlow();
+    updateSoundButton();
+}
             // ======================== CHAT ========================
             function initPeer() {
                 if (peer) {
